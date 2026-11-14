@@ -11,12 +11,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css?v=3">
+<link rel="stylesheet" href="site.css?v=15">
 </head>
 <body>
 
 <header class="top">
-  <a class="logo" href="#hero"><img src="../web/icon.png" alt="" width="40" height="40"><span>Stick &amp; Play</span></a>
+  <a class="logo" href="#hero" aria-label="Stick &amp; Play"><b>Stick</b><i>&amp;</i><b>Play</b></a>
   <nav class="links" aria-label="Sections">
     <a href="#how">How it works</a>
     <a href="#inside">Inside</a>
@@ -48,16 +48,14 @@
       <p class="lead">Kids play to collect stickers. Every sticker is an English word.</p>
       <div class="cta">
         <a class="btn btn-play" href="../web/"><span class="ico" data-icon="play"></span>Play free</a>
-        <a class="more" href="#how">See how it works</a>
       </div>
       <ul class="facts">
         <li>Ages 4–6</li><li>No ads</li><li>Works offline</li>
       </ul>
-      <p class="soon">Plays in your browser today. App Store and Google Play are coming.</p>
     </div>
 
     <figure class="hero-photo">
-      <img src="img/hero-kid.jpg" srcset="img/hero-kid-900.jpg 900w, img/hero-kid.jpg 1536w" sizes="(min-width: 980px) 70vw, 100vw"
+      <img src="img/hero-kid.jpg" srcset="img/hero-kid-900.jpg 900w, img/hero-kid.jpg 1536w" sizes="(min-width: 980px) 60vw, 100vw"
         width="1536" height="1024" alt="A five-year-old girl on a sofa plays the sticker album game on a tablet" fetchpriority="high">
     </figure>
   </div>
@@ -84,12 +82,7 @@
 
       <article class="panel p-stick">
         <header><span class="ico" data-icon="stick"></span><h3>Stick</h3></header>
-        <a class="fan" href="#albums" aria-label="See the eight albums">
-          <span style="background-image:url(../web/img/bg/farm.jpg)"><img src="../web/img/stickers/farm/cow.png" alt=""><em>Farm</em></span>
-          <span style="background-image:url(../web/img/bg/sea.jpg)"><img src="../web/img/stickers/sea/whale.png" alt=""><em>Sea</em></span>
-          <span style="background-image:url(../web/img/bg/forest.jpg)"><img src="../web/img/stickers/forest/fox.png" alt=""><em>Forest</em></span>
-          <span style="background-image:url(../web/img/bg/toys.jpg)"><img src="../web/img/stickers/toys/teddy-bear.png" alt=""><em>Toys</em></span>
-        </a>
+        <a class="fan" id="fan" href="#albums" aria-label="Albums as they look in the game. See all eight"></a>
       </article>
 
     </div>
@@ -239,7 +232,6 @@
       <li class="best"><em>Half the monthly price</em><h3>1 year</h3><b>29,99 €</b><span>per year</span><p>Everything open for a whole year.</p></li>
       <li><h3>For ever</h3><b>69,99 €</b><span>one payment</span><p>Everything open, with all we add later.</p></li>
     </ul>
-    <p class="prices-note">Premium opens every lesson, level, album and sticker, for up to 4 children on all your devices. It is bought in the Android and iPhone apps when they are released. Whatever a child has collected stays, with or without Premium.</p>
   </div>
 </section>
 
@@ -250,6 +242,7 @@
     <div class="faq">
       <details><summary>What age is it for?</summary><p>It is built around a five-year-old and works well from 4 to 6.</p></details>
       <details><summary>Does my child need to read?</summary><p>No. There is no text to read in the game: every instruction is spoken and every button is a picture.</p></details>
+      <details><summary>Does it follow the standards for teaching reading?</summary><p>Yes, the game is designed with them in mind. Letters are taught the way schools teach early reading, with synthetic phonics: one letter sound at a time, the most common first, and then the sounds are blended into words.</p></details>
       <details><summary>Which devices does it work on?</summary><p>Tablets and phones, held sideways. Today it plays in the browser; Android and iPhone apps are on the way.</p></details>
       <details><summary>Does it need the internet?</summary><p>The app works fully offline. The browser version needs a connection the first time it loads.</p></details>
       <details><summary>What does it cost?</summary><p>The first 20 lessons and the Farm album are free for good. Premium opens everything else: 4,99 € a month, 29,99 € a year, or 69,99 € once for ever. A parent buys it inside the app.</p></details>
@@ -283,13 +276,13 @@
 
 <footer class="foot">
   <div class="wrap foot-in">
-    <a class="logo" href="#hero"><img src="../web/icon.png" alt="" width="32" height="32"><span>Stick &amp; Play</span></a>
+    <a class="logo" href="#hero" aria-label="Stick &amp; Play"><b>Stick</b><i>&amp;</i><b>Play</b></a>
     <nav aria-label="Legal"><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Support</a></nav>
     <p>© 2026 Stick &amp; Play</p>
   </div>
 </footer>
 
 <div class="word" id="word" aria-live="polite"></div>
-<script type="module" src="site.js"></script>
+<script type="module" src="site.js?v=3"></script>
 </body>
 </html>

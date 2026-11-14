@@ -2,6 +2,7 @@
 import { VOICE } from '../web/js/gen/voice.js';
 import { SFX } from '../web/js/gen/sfx.js';
 import { I } from '../web/js/icons.js';
+import { STICKERS } from '../web/js/data.js';
 
 const WEB = '../web/';
 const $ = s => document.querySelector(s);
@@ -194,6 +195,26 @@ async function demo() {
   if (run === demoRun) finger.style.opacity = 0;
 }
 
+/* ---- the Stick panel: four albums as they look in the game: the tabs of all eight, stickers on the page, the shelf ---- */
+{
+  const TABS = { farm: ['cow', '#9fdc7c'], forest: ['fox', '#5f9e6e'], sea: ['whale', '#3aa4d8'], savanna: ['lion', '#e8b85a'],
+    toys: ['teddy bear', '#ffd0e0'], home: ['sofa', '#c9b3e6'], kitchen: ['apple', '#ffe08a'], space: ['rocket', '#5a5fb0'] };
+  const AT = [[20, 62, 17], [66, 58, 19], [44, 74, 15], [86, 76, 14]];   // the stickers on the page: x %, y %, width in cqw
+  const pic = (set, w) => `<img src="${img(set, w)}" alt="">`;
+  const DRIFT = [.05, -.04, -.06, .04];   // parallax: how far each album drifts as the page scrolls
+  $('#fan').innerHTML = ['farm', 'sea', 'forest', 'toys'].map((set, n) => {
+    const [, , onPage, inTray] = ALBUMS.find(a => a[1] === set);
+    const stuck = [...onPage, inTray[0], inTray[1]];
+    const tabs = ALBUMS.map(([, id]) => `<i${id === set ? ' class="on"' : ''} style="background:${TABS[id][1]}">${pic(id, TABS[id][0])}</i>`).join('');
+    const placed = stuck.map((w, i) => `<img class="mst" src="${img(set, w)}" alt="" style="left:${AT[i][0]}%;top:${AT[i][1]}%;width:${AT[i][2]}cqw">`).join('');
+    // the shelf: a sticker on the page has a tick, one not bought yet is pale and has its price
+    const shelf = [onPage[0], inTray[0], inTray[1], inTray[2], onPage[1], inTray[3], inTray[4]].map(w => stuck.includes(w)
+      ? `<b>${pic(set, w)}<u>✓</u></b>`
+      : `<b class="new">${pic(set, w)}<em><span class="ico">${I.coin}</span>${STICKERS[set + ':' + w].price}</em></b>`).join('');
+    return `<span class="mini" data-plx="${DRIFT[n]}"><span class="mscene" style="background-image:url(${WEB}img/bg/${set}.jpg)"><span class="mtabs">${tabs}</span>${placed}</span><span class="mshelf">${shelf}</span></span>`;
+  }).join('');
+}
+
 /* ---- the row of eight albums: a tap on a card opens it in the tablet ---- */
 for (const [name, set, onPage, inTray] of ALBUMS) {
   const pic = document.createElement('div');
@@ -217,6 +238,28 @@ if ('IntersectionObserver' in window) new IntersectionObserver(es => {
   visible = es[0].isIntersecting;
   if (visible) demo();
 }, { threshold: .6 }).observe(tryBox);
+
+/* ---- parallax: the hills of the first screen move slower than the page, the text and the photo at their own speeds
+        (--sy, css/site.css); an element with data-plx drifts by its distance from the middle of the window ---- */
+if (!calm) {
+  const hero = $('#hero'), drift = [...document.querySelectorAll('[data-plx]')];
+  let queued = false;
+  const parallax = () => {
+    queued = false;
+    hero.style.setProperty('--sy', Math.min(scrollY, hero.offsetHeight) + 'px');
+    const mid = innerHeight / 2;
+    for (const el of drift) {
+      const r = el.getBoundingClientRect(), was = el.plx || 0;
+      if (r.bottom < -200 || r.top > innerHeight + 200) continue;
+      el.plx = (r.top - was + r.height / 2 - mid) * el.dataset.plx;   // the place it has without the drift
+      el.style.translate = `0 ${el.plx.toFixed(1)}px`;
+    }
+  };
+  const ask = () => { if (!queued) { queued = true; requestAnimationFrame(parallax); } };
+  window.addEventListener('scroll', ask, { passive: true });
+  window.addEventListener('resize', ask);
+  parallax();
+}
 
 /* ---- game cards: a mouse plays them on hover (CSS); on a touch screen the card in the middle of the screen plays ---- */
 if (matchMedia('(hover: none)').matches && 'IntersectionObserver' in window) {
