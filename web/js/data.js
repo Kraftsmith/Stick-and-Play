@@ -61,6 +61,13 @@ export const LETTERS = [
   ['H',[['horse','🐎'],['hippo','🦛']]], ['R',[['rabbit','🐇'],['robot','🤖']]],
   ['B',[['ball','⚽'],['bed','🛏️']]], ['F',[['fox','🦊'],['fish','🐟']]],
 ];
+// The sound of a letter as a voice line (Specs/features/phonics.md, rule 1): "/s/", "/a/". On the letters level the app
+// says the sound and never the letter's name. C and K are one sound. The clips are made by app/voice.js; a sound
+// without a clip is not spoken at all (audio.js): the device's voice would read the name.
+const SOUND_OF = { C: 'k', X: 'ks' };
+export const soundOf = ch => `/${SOUND_OF[ch] || ch.toLowerCase()}/`;
+export const letterSound = li => soundOf(LETTERS[li][0]);
+export const isSound = text => /^/[a-z]+/$/.test(text);
 export const LETTER_WORD = {};   // example word of a letter -> its emoji
 LETTERS.forEach(([, ws]) => ws.forEach(([w, e]) => { LETTER_WORD[w] = e; }));
 // Shapes traced on level 1, one per theme, from easy to hard: the strokes letters are made of (levels/level-1.md).
@@ -260,6 +267,6 @@ export const ECON = {
 };
 
 // what the voice says after a correct answer
-export const PRAISE = ['Молодец!', 'Правильно!', 'Ура!', 'Отлично!', 'Супер!'];
+export const PRAISE = ['Браво!', 'Правильно!', 'Отлично!', 'Супер!'];
 // the emoji of any lesson word (level 1 themes and level 2 letter teams)
 export const emojiOf = w => WORD_INFO[w] ? WORD_INFO[w].e : CHUNK_WORD[w] ? CHUNK_WORD[w].e : LETTER_WORD[w] || '';

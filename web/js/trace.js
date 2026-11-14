@@ -1,9 +1,10 @@
 // Trace a letter, a letter team, a word or a shape: free-hand drawing over the outline on a canvas.
+// On level 1 the letter is the first one of a word the child knows, drawn over the word's picture, and is never named.
 import { $, pt, rectIn, capture } from './stage.js';
 import { U } from './session.js';
-import { LETTERS, CHUNKS, SHAPES, sndOf } from './data.js';
+import { LETTERS, CHUNKS, SHAPES, sndOf, letterSound, picOf, emojiOf } from './data.js';
 import { I } from './icons.js';
-import { say, ru, en, sfx } from './audio.js';
+import { say, ru, en, sfx, warm } from './audio.js';
 import { go } from './nav.js';
 import { dotsHtml, onTask } from './lessons.js';
 import { Q, setQ, answerQ } from './quiz.js';
@@ -36,10 +37,11 @@ function drawGlyph(ctx, ch, mode) {
   const xm = x0 + ctx.measureText(pre).width, xp = x0 + ctx.measureText(ch.slice(0, b)).width;
   if (mode === 'guide' || mode === 'done') { ctx.fillStyle = '#8b7966'; ctx.fillText(pre, x0, y); ctx.fillText(post, xp, y); }
   if (mode === 'guide') {
-    ctx.fillStyle = '#f1e7d6'; ctx.fillText(mid, xm, y);
-    ctx.setLineDash([14 * k, 12 * k]); ctx.lineWidth = 5; ctx.strokeStyle = '#b9a383'; ctx.strokeText(mid, xm, y); ctx.setLineDash([]);
+    // over a picture the letter is almost solid with a darker outline: it is the letter that is traced, not the picture
+    ctx.fillStyle = T.pic ? 'rgba(241, 231, 214, .88)' : '#f1e7d6'; ctx.fillText(mid, xm, y);
+    ctx.setLineDash([14 * k, 12 * k]); ctx.lineWidth = T.pic ? 6 : 5; ctx.strokeStyle = T.pic ? '#8b7966' : '#b9a383'; ctx.strokeText(mid, xm, y); ctx.setLineDash([]);
   } else if (mode === 'done') {
-    ctx.fillStyle = '#5fc27a'; ctx.fillText(mid, xm, y);
+    ctx.fillStyle = T.pic ? 'rgba(95, 194, 122, .8)' : '#5fc27a'; ctx.fillText(mid, xm, y);
   } else {
     ctx.fillStyle = '#000'; ctx.fillText(mid, xm, y);
     if (mode === 'zone') { ctx.lineWidth = TR.TOL * 2 * k; ctx.strokeStyle = '#000'; ctx.strokeText(mid, xm, y); }
@@ -71,7 +73,10 @@ function startTrace(task) {
   if (U.current !== 'trace') go('trace');
   if (U.current !== 'trace') return;
   let ch, id, phrase, after;
-  if (task.shape != null) {              // level 1: a shape, named in English
+  if (task.w) {                          // level 1: the first letter of a known word over its picture. The letter is
+    ch = task.w[0].toUpperCase(); id = task.w;   // not named and has no sound here: the child hears the word only
+    phrase = [ru('Обведи!'), en(task.w)]; after = [en(task.w)];
+  } else if (task.shape != null) {       // level 1: a shape, named in English
     const name = SHAPES[task.shape][0]; ch = ''; id = name;
     phrase = [ru('Обведи!'), en(name)]; after = [en(name)];
   } else if (task.text) {                // level 3: a letter team ("oy") or a word ("boy")
@@ -82,7 +87,7 @@ function startTrace(task) {
     after = team ? [en(sndOf(task.ci) + '.')] : [en(task.text + '.')];
   } else {
     const L0 = LETTERS[task.li][0]; ch = task.low ? L0.toLowerCase() : L0; id = L0;
-    phrase = [ru(task.low ? 'Обведи маленькую букву' : 'Обведи букву'), en(L0)]; after = [en(L0)];
+    phrase = [ru(task.low ? 'Обведи маленькую букву' : 'Обведи букву'), en(letterSound(task.li))]; after = [en(letterSound(task.li))];   // the sound, not the name (phonics.md, rule 1)
   }
   setQ({ task, miss: 0, locked: false, wrongAt: [], drag: false, id, after, phrase });
   // one letter: the square card; two or more: the wide card
@@ -92,7 +97,8 @@ function startTrace(task) {
   const px = traceFit(ch, W, H);
   const at = task.text && task.ci != null ? ch.indexOf(CHUNKS[task.ci][0]) : -1;
   const shape = task.shape != null ? new Path2D(SHAPES[task.shape][1]) : null;
-  T = { ch, W, H, px, k: shape ? (task.small ? .62 : 1) : px / 460, shape, pts: [], zone: null, ink: 0, off: 0, last: null,
+  $('tpic').innerHTML = task.w ? picOf(task.w, emojiOf(task.w)) : ''; $('tcard').classList.toggle('pic', !!task.w);
+  T = { ch, W, H, px, k: shape ? (task.small ? .62 : 1) : px / 460, shape, pic: !!task.w, pts: [], zone: null, ink: 0, off: 0, last: null,
         hl: at >= 0 ? [at, at + CHUNKS[task.ci][0].length] : null };
   $('tdots').innerHTML = dotsHtml();
   $('tstreak').innerHTML = U.streak > 0 ? I.fire.repeat(Math.min(U.streak % 3 || 3, 3)) : '';
@@ -105,6 +111,7 @@ function startTrace(task) {
     if (mask[(y * W + x) * 4 + 3] > 128) T.pts.push({ x, y, hit: false });
   traceClear();
   $('tspk').onclick = () => say(...Q.phrase);
+  warm(...Q.phrase);
   setTimeout(() => say(...Q.phrase), 250);
 }
 function traceClear() {

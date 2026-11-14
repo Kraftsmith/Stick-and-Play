@@ -4,7 +4,7 @@ import { U, LESSON_SCREENS } from './session.js';
 import { $ } from './stage.js';
 import { VOICE } from './gen/voice.js';
 import { SFX } from './gen/sfx.js';
-import { sfxFile } from './data.js';
+import { sfxFile, isSound, PRAISE } from './data.js';
 import { NTTS } from './platform.js';
 import { ICON_SND, ICON_MUTE } from './icons.js';
 
@@ -21,12 +21,32 @@ let sayGen = 0;
 export const ttsState = { log: '' };   // the last native TTS error, shown in the parent zone
 const clipOf = p => { const [text, lang] = typeof p === 'string' ? [p, 'ru'] : p; const f = VOICE[lang + '|' + text]; return f ? 'audio/voice/' + f + '.mp3' : null; };
 let clipAudio = null;
+// The clips of a phrase are fetched ahead (2026-11-14, Specs/features/sounds.md 6): a phrase is several clips played one
+// after another, and a clip that started loading only when its turn came left a pause of its own length between the
+// parts. An element per clip, loading from the moment the phrase is known; the last CLIPS_KEPT are kept.
+const clips = new Map(), CLIPS_KEPT = 60;
+function clipEl(src) {
+  let a = clips.get(src);
+  if (a) clips.delete(src);
+  else { a = new Audio(); a.preload = 'auto'; a.src = src; }
+  clips.set(src, a);   // the newest last
+  if (clips.size > CLIPS_KEPT) clips.delete(clips.keys().next().value);
+  return a;
+}
+// start loading the clips of these parts: called when a task's phrase is built, before it is said
+export function warm(...parts) { parts.forEach(p => { const src = clipOf(p); if (src) clipEl(src); }); }
 function playClip(src) {
   return new Promise(res => {
     if (clipAudio) { clipAudio.pause(); clipAudio = null; }
-    const a = new Audio(src); a.volume = S.voiceVol / 100; clipAudio = a;
-    a.onended = a.onerror = () => { if (clipAudio === a) clipAudio = null; res(); };
-    a.play().catch(() => res());
+    const a = clipEl(src); a.volume = S.voiceVol / 100; clipAudio = a;
+    try { a.currentTime = 0; } catch (e) {}
+    const ac = new AbortController(), on = (ev, fn) => a.addEventListener(ev, fn, { signal: ac.signal });
+    const done = bad => { ac.abort(); if (bad) clips.delete(src); if (clipAudio === a) clipAudio = null; res(); };   // a clip that failed is fetched anew next time
+    on('ended', () => done(false)); on('error', () => done(true));
+    // cut short by stopVoice: the promise ends too (it used to hang for ever once the clip had started). The check
+    // skips the late "pause" of an earlier stop, when the same clip is already playing again.
+    on('pause', () => { if (a.paused && !a.ended) done(false); });
+    a.play().catch(() => done(true));
   });
 }
 // The Voices table (parent zone, Testing): one line through its clip or through the device's voice, whatever the
@@ -35,14 +55,15 @@ export function hearLine(lang, text, how) {
   stopVoice();
   const gen = sayGen, p = [text, lang], src = clipOf(p);
   if (how === 'clip' && !src) return Promise.resolve(false);
-  return (how === 'clip' ? playClip(src) : speakPart(p)).then(() => gen === sayGen);
+  duck(true);
+  return (how === 'clip' ? playClip(src) : speakPart(p)).then(() => { if (gen === sayGen) duck(false); return gen === sayGen; });
 }
 export const hasClip = (lang, text) => !!clipOf([text, lang]);
 // the device voices the app would use when a line has no clip (browser only; the native app uses the system TTS)
 export const deviceVoices = () => NTTS ? { ru: 'system TTS (ru-RU)', en: 'system TTS (en-US)' }
   : { ru: voices.ru ? voices.ru.name + ' · ' + voices.ru.lang : 'none: Russian is read by the default voice', en: voices.en ? voices.en.name + ' · ' + voices.en.lang : 'none' };
 export function stopVoice() {
-  sayGen++; stopFx();
+  sayGen++; stopFx(); duck(false);
   if (clipAudio) { clipAudio.pause(); clipAudio = null; }
   if (NTTS) NTTS.stop().catch(() => {}); else try { speechSynthesis.cancel(); } catch (e) {}
 }
@@ -71,12 +92,18 @@ export function say(...parts) {
   if (!parts.length) return;
   stopVoice();
   const gen = sayGen;
+  warm(...parts);   // every part loads now, while the first one is being said
+  duck(true);       // the music steps back while the voice speaks
+  // a signal that has just sounded ("correct", a click) ends first: the word is not said over it
+  const hold = Math.min(FX_HOLD, fxUntil - performance.now());
   // resolves true when everything was said, false when another line or a change of screen cut it short
   return parts.reduce((chain, p) => chain.then(() => {
     if (gen !== sayGen) return;
     const src = clipOf(p);
+    // a letter's sound has no fallback: the device's voice would read "/s/" as the letter's name (phonics.md, rule 1)
+    if (!src && typeof p !== 'string' && isSound(p[0])) return;
     return src ? playClip(src) : speakPart(p);
-  }), Promise.resolve()).then(() => gen === sayGen);
+  }), hold > 0 ? new Promise(r => setTimeout(r, hold)) : Promise.resolve()).then(() => { if (gen === sayGen) duck(false); return gen === sayGen; });
 }
 // The own sound of a rare or special sticker (SPEC 3.6): a short clip from app/sfx.js; silent until its file exists.
 let fxAudio = null;
@@ -94,7 +121,18 @@ export function sayThenSound(key, parts, then) {
 }
 
 let actx, musicBusNode = null;
-const musicGain = () => Math.max(0, Math.min(100, S.musicVol)) / 50;   // 50% = the designed level, 100% = twice as loud
+// While the voice speaks the music plays at DUCK of its level (2026-11-14): it goes down fast and comes back slowly.
+const DUCK = 0.35;
+let ducked = false;
+const musicGain = () => Math.max(0, Math.min(100, S.musicVol)) / 50 * (ducked ? DUCK : 1);   // 50% = the designed level, 100% = twice as loud
+function duck(on) {
+  if (ducked === on) return;
+  ducked = on;
+  if (musicBusNode) try { musicBusNode.gain.setTargetAtTime(musicGain(), actx.currentTime, on ? .06 : .3); } catch (e) {}
+}
+// when the signal that is sounding now ends (performance.now() time); the voice waits for it, FX_HOLD ms at most
+let fxUntil = 0;
+const FX_HOLD = 400;
 function musicBus() {
   if (!musicBusNode) { musicBusNode = actx.createGain(); musicBusNode.gain.value = musicGain(); musicBusNode.connect(actx.destination); }
   return musicBusNode;
@@ -103,6 +141,7 @@ function beep(freqs, dur = .12, type = 'sine') {
   if (S.mute) return;
   try {
     actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    fxUntil = performance.now() + ((freqs.length - 1) * dur + dur * 1.2) * 1000;
     freqs.forEach((f, i) => {
       const o = actx.createOscillator(), g = actx.createGain();
       o.type = type; o.frequency.value = f; o.connect(g); g.connect(actx.destination);
@@ -293,8 +332,8 @@ $('mute').onclick = ev => {
   } else { music.start(); sfx.pop(); }
 };
 renderMute();
-// browsers allow sound only after the first touch
-addEventListener('pointerdown', () => music.start(), { once: true });
+// browsers allow sound only after the first touch; the praise is said after every right answer, so it is fetched at once
+addEventListener('pointerdown', () => { music.start(); warm(...PRAISE.map(t => [t, 'ru']), ['Попробуй ещё!', 'ru'], ['Три подряд! Бонус!', 'ru']); }, { once: true });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { music.stop(); try { actx && actx.suspend(); } catch (e) {} }
   else { try { actx && actx.resume(); } catch (e) {} music.start(); }

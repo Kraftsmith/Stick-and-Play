@@ -72,7 +72,7 @@ export function enterHome(profileId, { greet = false } = {}) {
   if (newDay && !firstEver) setTimeout(() => {
     if (U.current !== 'home') return;
     overlay(`<div class="bigpic">${I.coin}</div><div class="gain">+${ECON.daily} ${I.coin}</div><div class="row"><button class="btn orange" id="hi">Hi!</button></div>`);
-    $('hi').onclick = () => { closeOverlay(); addCoins(ECON.daily, { x: 600, y: 400 }); say('Монетки за то, что пришёл!'); };
+    $('hi').onclick = () => { closeOverlay(); addCoins(ECON.daily, { x: 600, y: 400 }); say('Монетки тебе в подарок!')   /* no "пришёл": the child may be a girl (2026-11-14) */; };
   }, 400);
   return true;
 }

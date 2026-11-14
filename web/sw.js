@@ -8,7 +8,7 @@ import { VOICE } from './js/gen/voice.js';
 import { SFX } from './js/gen/sfx.js';
 import { sfxFile } from './js/data.js';
 
-const CACHE = 'stick-and-speak-17';   // the name keeps the app's first name on purpose; 17: premium.js and paywall.js joined the shell
+const CACHE = 'stick-and-speak-26';   // the name keeps the app's first name on purpose; 19: a sticker is bought by dragging
 const SHELL = [
   './', 'index.html', 'manifest.json', 'icon.png',
   'css/base.css', 'css/home.css', 'css/learn.css', 'css/lesson.css', 'css/album.css', 'css/collection.css', 'css/parent.css', 'css/startup.css',

@@ -1,5 +1,5 @@
-// The album: one page per set; its shelf holds the whole set. Stickers are tried on and bought on the page, dragged
-// from the shelf, moved, scaled, rotated, flipped, put back (features/stick.md).
+// The album: one page per set; its shelf holds the whole set. A sticker dragged from the shelf to the page is bought
+// right there; on the page it is moved, scaled, rotated, flipped, or given back for half its price (features/stick.md).
 import { Cloud } from './cloud.js';
 import { $, frame, pt, rectIn, capture } from './stage.js';
 import { U } from './session.js';
@@ -26,6 +26,16 @@ export function buySticker(st) {
   Cloud.pushSoon();   // a purchase goes to the cloud copy at once (cloud-sync.md 4.4)
   return { first, newPage };
 }
+// Giving a sticker back (features/stick.md 5): half the price comes back, the piece is no longer the child's.
+export const refundOf = st => Math.floor(st.price / 2);
+function sellSticker(st) {
+  const back = refundOf(st);
+  if (S.bought[st.key] > 1) S.bought[st.key]--; else delete S.bought[st.key];
+  S.coins += back;
+  save(); renderCoins(true);
+  Cloud.pushSoon();
+  return back;
+}
 // the trophy for a complete set, once per set
 export function checkSetComplete(setId) {
   const set = SETS.find(s => s.id === setId);
@@ -33,7 +43,7 @@ export function checkSetComplete(setId) {
   S.rewarded.push(setId);
   save();
   setTimeout(() => {
-    confetti(); say(ru('Ты собрал весь набор!'), en(set.name + '!'), ru('Тебе кубок!'), ru('Покажи ' + parentDat() + '!'));
+    confetti(); say(ru('Весь набор собран!'), en(set.name + '!'), ru('Тебе кубок!'), ru('Покажи ' + parentDat() + '!'));
     overlay(`<div class="bigpic">${iconOf(set)}${I.trophy}</div><div class="gain">${set.name}: 12/12</div>
       <div class="row"><button class="btn to-stick" id="tostick">${I.stick} Stick</button><button class="btn gray" id="cl">${I.close}</button></div>`);
     // already in this album: the button just closes the window
@@ -44,17 +54,16 @@ export function checkSetComplete(setId) {
 
 /* ================= album ================= */
 // features/stick.md: every album page can be opened; one is open (lit) once a sticker of its set is bought.
-// Its shelf holds all 12 stickers of the set; a sticker not bought (or with every piece on the page) is tried on the page
-// and bought there with the coin button.
+// Its shelf holds all 12 stickers of the set; a sticker not bought (or with every piece on the page) is bought by
+// dragging it onto the page, if the coins are enough.
 let selected = null;   // the tapped sticker (its toolbar is open)
 function sceneData() { return S.scenes[U.sceneId] = S.scenes[U.sceneId] || []; }
 const setOf = id => SETS.find(s => s.id === id);
 const keysOf = id => setOf(id).items.map(([, w]) => id + ':' + w);   // the set's own order: 8 common, 3 rare, 1 special
-const haveN = id => keysOf(id).filter(k => S.bought[k]).length;
 function renderTabs() {
   $('scenetabs').innerHTML = SCENES.map(s => {
     const open = sceneOpen(s.id);
-    return `<button class="st ${s.id === U.sceneId ? 'on' : ''} ${open ? '' : 'locked'} ${S.rewarded.includes(s.id) ? 'cup' : ''}" data-s="${s.id}" style="background:${s.bg}">${iconOf(setOf(s.id) || s)}<span class="n">${haveN(s.id)}/12</span></button>`;
+    return `<button class="st ${s.id === U.sceneId ? 'on' : ''} ${open ? '' : 'locked'} ${S.rewarded.includes(s.id) ? 'cup' : ''}" data-s="${s.id}" style="background:${s.bg}">${iconOf(setOf(s.id) || s)}</button>`;   // no "5/12" on a tab: a number the child does not need (2026-11-14)
   }).join('');
   // a closed album opens too: the child sees what can be collected there
   $('scenetabs').querySelectorAll('.st').forEach(b => b.onclick = () => {
@@ -194,6 +203,7 @@ function dragFromShelf(t) {
     if (!wasDrag) { nameSticker(k); return; }
     if (!(q.y < 600 && q.y > 0 && q.x > 0 && q.x < 1280)) return;
     if (S.inv[k] > 0) placeFromShelf(k, q);
+    else if (!stickerLocked(STICKERS[k].set) && S.coins >= STICKERS[k].price) buyDrop(k, q);
     else startTrial(k, q);
   };
   t.addEventListener('pointerup', up);
@@ -213,24 +223,48 @@ function placeFromShelf(k, q) {
   sfx.snap(); renderShelf(); limitMotion(); showLabel(el);
 }
 
-/* ---- trying a sticker on (features/stick.md 5) ---- */
-// one at a time: { k, el, ui, timer }. Never in S.scenes and never saved until the coin button is pressed.
-let trial = null;
+/* ---- buying by dragging (features/stick.md 5) ---- */
 const clampX = x => Math.max(70, Math.min(1210, x)), clampY = y => Math.max(70, Math.min(500, y));
+// A sticker the coins are enough for, dropped on the page: the coins are spent at once and it is stuck where it fell.
+// No button and no question; a sticker bought by mistake is given back for half the price (removePlaced).
+function buyDrop(k, q) {
+  cancelTrial(true);
+  if (timeUp()) return;
+  hideTools();
+  const st = STICKERS[k], set = setOf(st.set);
+  const got = buySticker(st);
+  if (!got) return;
+  const it = { k, x: clampX(q.x), y: clampY(q.y), s: 1, r: 0, f: false, z: topZ() + 1 };
+  sceneData().push(it); save();
+  const el = placedEl(it); $('page').appendChild(el);
+  el.animate([{ scale: .3 }, { scale: 1.2 }, { scale: 1 }], { duration: 320 });
+  flyCoins(el);
+  sfx.snap(); limitMotion();
+  // only the sticker's name is said: no "Ура! Новый стикер!" (2026-11-15)
+  say(en(st.w), ...(got.newPage ? [ru('И новый альбом!'), en(set.name)] : []));
+  if (got.first) confetti();
+  // the first sticker opens the album: the page and its tab light up
+  $('album').classList.remove('closed');
+  renderTabs(); renderShelf();
+  checkSetComplete(st.set);
+}
+
+/* ---- trying a sticker on: only one that cannot be bought now (not enough coins, or an album outside the free plan) ---- */
+// one at a time: { k, el, ui, timer }. Never in S.scenes and never saved.
+let trial = null;
 function startTrial(k, q) {
   cancelTrial(true);
   if (timeUp()) return;
   hideTools();
-  // an album outside the free plan: the sticker can be tried on, but a lock stands where the coin button would be
-  // (features/stick.md 7); it calls the grown-up, with no price and no "buy" on the child's side
-  const st = STICKERS[k], locked = stickerLocked(st.set), enough = !locked && S.coins >= st.price;
+  // an album outside the free plan: the sticker can be tried on, with a lock under it (features/stick.md 7); it calls
+  // the grown-up, with no price and no "buy" on the child's side
+  const st = STICKERS[k], locked = stickerLocked(st.set);
   const el = document.createElement('div');
   el.className = 'placed trial ' + st.rarity; el.innerHTML = pic(st);
   el._it = { k, x: clampX(q.x), y: clampY(q.y), s: 1, r: 0, f: false, z: topZ() + 2 };
   applyT(el);
   const ui = document.createElement('div'); ui.className = 'trialui';
   ui.innerHTML = locked ? `<button class="buybtn paylock" id="paybtn">${I.lock}</button>`
-    : enough ? `<button class="buybtn" id="buybtn">${I.coin}<span>${st.price}</span></button>`
     : `<div class="need"><i style="width:${Math.min(100, S.coins / st.price * 100)}%"></i></div>`;
   ui.style.zIndex = el._it.z + 1;
   $('page').append(el, ui);
@@ -241,7 +275,6 @@ function startTrial(k, q) {
   dragTrial(el);
   ui.addEventListener('pointerdown', ev => ev.stopPropagation());
   if (locked) { $('paybtn').onclick = ev => { ev.stopPropagation(); sfx.pop(); openParent('premium'); }; nameSticker(k); }
-  else if (enough) { $('buybtn').onclick = ev => { ev.stopPropagation(); buyTrial(); }; nameSticker(k); }
   else {
     // not enough coins: it was fine to look; it slides back and Play comes in its place (no red, no "wrong" sound)
     say(en(st.w));
@@ -303,50 +336,31 @@ function notEnough() {
   $('page').appendChild(b);
   setTimeout(() => { b.classList.add('gone'); setTimeout(() => b.remove(), 400); }, 4500);
 }
-// the coin button: the only thing that spends coins
-function buyTrial() {
-  if (!trial || trial.locked || timeUp()) return;
-  const { k, el } = trial, st = STICKERS[k], set = setOf(st.set);
-  const got = buySticker(st);
-  if (!got) return;
-  clearTimeout(trial.timer); trial.ui.remove(); trial = null;
-  flyCoins(el);
-  const it = { ...el._it, z: topZ() + 1 };
-  sceneData().push(it); save();
-  setTimeout(() => {
-    const placed = placedEl(it);
-    if (el.isConnected) el.replaceWith(placed); else if ($('page')) $('page').appendChild(placed);
-    placed.animate([{ scale: 1 }, { scale: 1.25 }, { scale: 1 }], { duration: 320 });
-    sfx.snap(); limitMotion();
-    say(...(got.first ? [ru('Ура! Новый стикер!')] : []), en(st.w), ...(got.newPage ? [ru('И новый альбом!'), en(set.name)] : []));
-    if (got.first) confetti();
-    // the first sticker opens the album: the page and its tab light up, the count goes from 0/12 to 1/12
-    $('album').classList.remove('closed');
-    renderTabs(); renderShelf();
-    checkSetComplete(st.set);
-  }, 650);
-}
-// coins fly from the counter into the sticker being bought
-function flyCoins(el) {
-  const from = rectIn($('coins')), to = rectIn(el);
-  for (let i = 0; i < 5; i++) {
+// coins fly from the counter into the sticker being bought; `back`: out of a sticker given back, into the counter
+function flyCoins(el, back) {
+  const cr = rectIn($('coins')), sr = rectIn(el);
+  const counter = () => ({ x: cr.x + 10, y: cr.y + 6 }), sticker = () => ({ x: sr.x + sr.w / 2 - 20 + (Math.random() * 40 - 20), y: sr.y + sr.h / 2 - 20 });
+  for (let i = 0; i < (back ? 3 : 5); i++) {
     const c = document.createElement('div'); c.className = 'flycoin'; c.innerHTML = I.coin;
-    c.style.left = (from.x + 10) + 'px'; c.style.top = (from.y + 6) + 'px';
+    const from = back ? sticker() : counter(), to = back ? counter() : sticker();
+    c.style.left = from.x + 'px'; c.style.top = from.y + 'px';
     frame.appendChild(c);
-    setTimeout(() => { c.style.left = (to.x + to.w / 2 - 20 + (Math.random() * 40 - 20)) + 'px'; c.style.top = (to.y + to.h / 2 - 20) + 'px'; }, 30 + i * 60);
+    setTimeout(() => { c.style.left = to.x + 'px'; c.style.top = to.y + 'px'; }, 30 + i * 60);
     setTimeout(() => { c.remove(); sfx.coin(); }, 700 + i * 60);
   }
 }
-const trash = $('trash');
-// a sticker dragged back onto the shelf goes back into it, the same as one dropped on the trash
+// a sticker dragged back onto the shelf is given back; there is no trash (2026-11-15)
 const overShelf = q => q.y >= rectIn($('shelf')).y;
-const overTrash = q => { const r = rectIn(trash); return Math.hypot(q.x - (r.x + r.w / 2), q.y - (r.y + r.h / 2)) < 90; };
+// Given back: the piece leaves the page and the child's stickers, half its price returns to the counter. The album
+// that loses its last sticker closes again; a trophy already won stays.
 function removePlaced(el) {
   const it = el._it, d = sceneData();
-  d.splice(d.indexOf(it), 1); S.inv[it.k] = (S.inv[it.k] || 0) + 1; save();
+  d.splice(d.indexOf(it), 1);
+  flyCoins(el, true);
+  sellSticker(STICKERS[it.k]);
   hideTools();
   el.animate([{ opacity: 1 }, { opacity: 0, scale: .2 }], { duration: 200, fill: 'forwards' });
-  setTimeout(() => { el.remove(); renderShelf(); limitMotion(); }, 200);
+  setTimeout(() => { el.remove(); $('album').classList.toggle('closed', !sceneOpen(U.sceneId)); renderTabs(); renderShelf(); limitMotion(); }, 200);
   sfx.pop();
 }
 function dragPlaced(el) {
@@ -357,11 +371,11 @@ function dragPlaced(el) {
     ev.stopPropagation(); capture(el, ev);
     const q = pt(ev); ptrs.set(ev.pointerId, q);
     hideTools(); cancelTrial();
-    if (ptrs.size === 1) { off = { x: q.x - el._it.x, y: q.y - el._it.y }; moved = false; startQ = q; trash.classList.add('on'); }
+    if (ptrs.size === 1) { off = { x: q.x - el._it.x, y: q.y - el._it.y }; moved = false; startQ = q; }
     if (ptrs.size === 2) {
       const [a, b] = [...ptrs.values()];
       pinch = { d: Math.hypot(b.x - a.x, b.y - a.y), ang: Math.atan2(b.y - a.y, b.x - a.x), s: el._it.s, r: el._it.r };
-      off = null; moved = true; trash.classList.remove('on');
+      off = null; moved = true; $('shelf').classList.remove('hot');
     }
   });
   el.addEventListener('pointermove', ev => {
@@ -377,7 +391,7 @@ function dragPlaced(el) {
     if (!off) return;
     if (Math.hypot(q.x - startQ.x, q.y - startQ.y) > 8) moved = true;
     el._it.x = Math.max(0, Math.min(1280, q.x - off.x)); el._it.y = Math.max(0, Math.min(620, q.y - off.y));
-    trash.classList.toggle('hot', overTrash(q));
+    $('shelf').classList.toggle('hot', moved && overShelf(q));   // the shelf lights up: let go and the sticker goes back
     applyT(el);
   });
   const up = ev => {
@@ -385,10 +399,8 @@ function dragPlaced(el) {
     const q = ptrs.get(ev.pointerId); ptrs.delete(ev.pointerId);
     if (pinch) { if (ptrs.size === 0) { pinch = null; save(); select(el); } return; }
     if (!off) return; off = null;
-    // ask before hiding the trash: a hidden one has no size and nothing would ever land in it
-    const inTrash = overTrash(q) || (moved && overShelf(q));   // a tap on a sticker that hangs over the shelf is not a drag
-    trash.classList.remove('on', 'hot');
-    if (inTrash) { removePlaced(el); return; }
+    $('shelf').classList.remove('hot');
+    if (moved && overShelf(q)) { removePlaced(el); return; }   // a tap on a sticker that hangs over the shelf is not a drag
     save(); select(el);
     if (!moved) showLabel(el);
   };

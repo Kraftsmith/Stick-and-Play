@@ -27,10 +27,6 @@
 .tools { position: absolute; z-index: 60; display: none; gap: 8px; background: #fff; padding: 8px; border-radius: 26px; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
 .tools.on { display: flex; }
 .tools button { width: 64px; height: 64px; border-radius: 50%; border: none; background: #f4eee6; font-size: 32px; cursor: pointer; }
-.trash { position: absolute; right: calc(30px + var(--er)); bottom: 200px; z-index: 55; width: 120px; height: 120px; border-radius: 50%; background: #ffd9d9;
-  font-size: 64px; display: none; align-items: center; justify-content: center; box-shadow: 0 6px 0 #e8a8a8; transition: transform .15s; }
-.trash.on { display: flex; }
-.trash.hot { transform: scale(1.3); background: #ff9d9d; }
 /* the shelf runs out to the window's sides and bottom; the stickers on it stay level with the frame */
 .shelf { position: absolute; left: calc(0px - var(--bx)); right: calc(0px - var(--bx)); bottom: calc(0px - var(--by)); height: calc(180px + var(--by)); background: #f7efe3; border-top: 6px solid #e8d8c2;
   display: flex; align-items: center; gap: 18px; padding: 0 calc(30px + var(--bx)) var(--by); overflow-x: auto; }
@@ -70,9 +66,10 @@
 .tools { padding: 8px; gap: 8px; border-radius: 30px;
   background: #fffdf4; box-shadow: 0 5px 0 #c6bca8, 0 12px 30px #31484930; }
 .tools button { width: 80px; height: 80px; flex: none; border: 2px solid #e9e1cc; background: #f2eddf; color: #4a5961; }
-.trash { border: 4px solid #ffebe0; background: #f4c5b7; box-shadow: 0 6px 0 #c58c7d, 0 10px 22px #80544026; }
 .shelf { background: repeating-linear-gradient(90deg, transparent 0 31px, #c6a6740a 31px 32px), linear-gradient(#fff9e9, #f0e0c3);
   border-top: 6px solid #fff9eb; box-shadow: 0 -6px 0 #c8b390, 0 -14px 25px #5c55381a; gap: 22px; scrollbar-width: thin; scrollbar-color: #bca681 #f3e5cc; }
+/* a sticker from the page is held over the shelf: let go and it goes back */
+.shelf.hot { background: linear-gradient(#fff3cf, #f6d99b); border-top-color: #ffd98a; }
 .shelf .tk { border: 3px solid #fff; background: #fffdf6; box-shadow: 0 5px 0 #d3bd96, 0 8px 14px #8c71451a; }
 .shelf .tk b { background: #976236; border: 3px solid #fff7e3; }
 .shelf .empty { color: #7c684e; }
@@ -156,9 +153,7 @@
 @keyframes shine { from { background-position: 100% 100%; } to { background-position: 0 0; } }
 
 /* ---- features/stick.md: closed albums, the whole set on the shelf, trying on and buying ---- */
-/* the tabs: every album shows its count; a closed one is dimmed and reads 0/12 (.st.locked) */
-.st .n { position: absolute; left: 50%; bottom: -14px; transform: translateX(-50%); padding: 1px 8px; border-radius: 12px; white-space: nowrap;
-  font-size: 18px; font-weight: 800; line-height: 1.3; color: #5d4a2c; background: #fffdf3; box-shadow: 0 2px 0 #c8b39066; }
+/* the tabs: a closed album is dimmed (.st.locked); no count on a tab */
 .st.locked { filter: grayscale(.5) brightness(.9); opacity: .9; }
 /* a closed album: the page is dimmed, not hidden; it lights up with the first sticker */
 .page::before { content: ''; position: absolute; left: calc(0px - var(--bx)); right: calc(0px - var(--bx)); top: calc(0px - var(--by)); bottom: 0;

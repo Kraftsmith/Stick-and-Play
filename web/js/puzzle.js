@@ -104,7 +104,7 @@ function puzzleDone() {
   const gain = ECON.puzzle[Math.min(PZ.level, 3) - 1];
   S.stats.puzzles++; S.stats.tasks++; save();
   L.earned += gain;
-  confetti(); sfx.ok(); say(cheer('Ура!'), en(PZ.word + '!'));
+  confetti(); sfx.ok(); say(cheer('Супер!'), en(PZ.word + '!'));
   const b = rectIn($('board'));
   $('board').animate([{ transform: 'scale(1)' }, { transform: 'scale(1.06) rotate(-2deg)' }, { transform: 'scale(1)' }], { duration: 600 });
   $('pname').textContent = PZ.word; $('pname').classList.add('on');

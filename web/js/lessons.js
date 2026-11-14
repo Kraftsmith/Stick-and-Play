@@ -2,7 +2,7 @@
 import { $ } from './stage.js';
 import { U } from './session.js';
 import { S, save, isDone, wordsOf, learnedWords, learnedLetters, learnedChunks } from './state.js';
-import { TRACKS, THEMES, LETTERS, CHUNKS, CHUNK_WORD, WORD_INFO, SETS, STICKERS, ECON, pic, picOf, markWord, sndOf } from './data.js';
+import { TRACKS, THEMES, LETTERS, letterSound, CHUNKS, CHUNK_WORD, WORD_INFO, SETS, STICKERS, ECON, pic, picOf, markWord, sndOf } from './data.js';
 const letterWords = lis => lis.flatMap(li => LETTERS[li][1].map(x => x[0]));
 import { I, ICON_NEXT } from './icons.js';
 import { one, shuffle } from './util.js';
@@ -43,7 +43,8 @@ export function letterIntro(li) {
   const [ch, ws] = LETTERS[li];
   return { html: `<div class="letterbig">${ch}</div>
       <div class="lpics">${ws.map(([w, e]) => `<div>${picOf(w, e)}<small><b>${w[0]}</b>${w.slice(1)}</small></div>`).join('')}</div>`,
-    speak: () => say(en(ch + '.'), en(`${ch} is for ${ws.map(w => w[0]).join(', and ')}.`)) };
+    // the sound, never the name (phonics.md, rule 1): "sss. sss, sun. sss, socks."
+    speak: () => say(en(letterSound(li)), ...ws.flatMap(w => [en(letterSound(li)), en(w[0])])) };
 }
 export function chunkIntro(ci) {
   const [c, s, ws] = CHUNKS[ci];
@@ -84,7 +85,8 @@ export function buildLesson(tr, idx) {
   } else if (ls.kind === 'words') {
     const ws = shuffle(wordsOf(ls));
     intro = wordsOf(ls).map(w => ({ html: `<div class="pic">${pic(WORD_INFO[w])}</div><div class="word">${w}</div>`, speak: () => say(en(w)) }));
-    tasks = [{ t: 'pick', w: ws[0] }, { t: 'pick', w: ws[1] }, { t: 'pair', w: ws[2] }, { t: 'pick', w: ws[3] },
+    // level 1 does not name letters, but lets the child trace one: the first letter of a new word, over its picture
+    tasks = [{ t: 'pick', w: ws[0] }, { t: 'pick', w: ws[1] }, { t: 'trace', w: ws[1] }, { t: 'pair', w: ws[2] }, { t: 'pick', w: ws[3] },
              { t: 'puzzle', w: one(ws), level: ls.level }];
   } else if (ls.kind === 'shape') {
     // level 1, between the word lessons: the theme's shape to trace, then the words learned so far in this theme.

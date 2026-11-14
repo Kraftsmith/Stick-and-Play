@@ -99,6 +99,11 @@
   box-shadow: 0 12px 0 #ecdcc4, 0 20px 40px rgba(120,80,30,.12); touch-action: none; }
 .tcard canvas { position: absolute; inset: 0; width: 600px; height: 600px; }
 .tcard.ok { animation: bump .5s; }
+/* level 1: the word's picture behind the letter to trace; pale while tracing, clearer when the letter is done */
+.tpic { position: absolute; inset: 50px; display: flex; align-items: center; justify-content: center; font-size: 380px; line-height: 1;
+  opacity: .2; filter: saturate(.6); transition: opacity .5s, filter .5s; pointer-events: none; }
+.tpic .spic { width: 100%; height: 100%; object-fit: contain; }
+.tcard.pic.ok .tpic { opacity: .85; filter: none; }
 .tspk { position: absolute; left: 170px; top: 140px; }
 .tclear { position: absolute; right: 170px; top: 140px; width: 120px; height: 120px; border-radius: 50%; border: none;
   background: #fff; box-shadow: 0 7px 0 #ddd0bd; font-size: 60px; color: #8a6d4a; cursor: pointer; }

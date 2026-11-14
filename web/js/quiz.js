@@ -2,10 +2,10 @@
 import { $, pt, rectIn, capture } from './stage.js';
 import { U } from './session.js';
 import { S, save, chunkPool, praise } from './state.js';
-import { WORD_INFO, THEMES, SETS, CHUNKS, CHUNK_WORD, LETTERS, ECON, pic, picOf, gapWord, markWord, sndOf } from './data.js';
+import { WORD_INFO, THEMES, SETS, CHUNKS, CHUNK_WORD, LETTERS, ECON, pic, picOf, gapWord, markWord, sndOf, letterSound } from './data.js';
 import { I } from './icons.js';
 import { pick, shuffle, one } from './util.js';
-import { say, ru, en, cheer, sfx } from './audio.js';
+import { say, ru, en, cheer, sfx, warm } from './audio.js';
 import { addCoins } from './ui.js';
 import { go } from './nav.js';
 import { L, later, nextTask, dotsHtml, letterPool, onTask } from './lessons.js';
@@ -39,7 +39,8 @@ export function showQ(task) {
     const ins = pick(THEMES[task.theme], 3);
     const grp = SETS.find(s => s.id === task.theme).group;
     const out = one(THEMES[one(SETS.filter(s => s.group !== grp).map(s => s.id))]);
-    opts = shuffle([...ins.map(x => ({ label: x[1], ok: false, cls: '' })), { label: out[1], ok: true, cls: '' }]);
+    // the sticker pictures, like every other task (the emoji here was the device's own, in another style)
+    opts = shuffle([...ins.map(x => ({ label: picOf(x[0], x[1]), ok: false, cls: '' })), { label: picOf(out[0], out[1]), ok: true, cls: '' }]);
     phrase = [ru('Что здесь лишнее? Нажми!')];
     // no theme picture here: a farm cow above farm options looked like "find the cow"
     P.innerHTML = `${spk}<div class="promptpic">${I.think}</div>`;
@@ -65,15 +66,16 @@ export function showQ(task) {
     opts = shuffle([task.li, ...others]).map(i => ({ label: LETTERS[i][0], ok: i === task.li, cls: 'letter' }));
     Q.id = ch;
     if (task.t === 'find') {
-      phrase = [ru('Найди букву'), en(ch)];
-      P.innerHTML = spk; Q.after = [en(ch)];
+      // the sound, never the letter's name (phonics.md, rule 1)
+      phrase = [ru('Найди букву, которая говорит'), en(letterSound(task.li))];
+      P.innerHTML = spk; Q.after = [en(letterSound(task.li))];
     } else {
       const [w, e] = one(LETTERS[task.li][1]);
-      phrase = [ru('С какой буквы начинается'), en(w), ru('?')];
-      P.innerHTML = `${spk}<div class="promptpic">${picOf(w, e)}</div>`; Q.after = [en(`${ch}. ${w}.`)];
+      phrase = [ru('С какого звука начинается слово?'), en(w)];   // a whole question, then the word (was three clips, the last one a lone "?")
+      P.innerHTML = `${spk}<div class="promptpic">${picOf(w, e)}</div>`; Q.after = [en(letterSound(task.li)), en(w + '.')];
     }
   }
-  Q.phrase = phrase;
+  Q.phrase = phrase; warm(...phrase, ...(Q.after || []));
   $('spk').onclick = () => say(...phrase);
   setTimeout(() => say(...phrase), 250);
   const C = $('choices'); C.innerHTML = '';
@@ -106,7 +108,8 @@ export function dragChoice(b, ok) {
 }
 export function answerQ(btn, ok) {
   if (Q.locked) return;
-  const isLetter = ['find', 'first', 'trace', 'chunk', 'missing'].includes(Q.task.t);
+  // a letter traced over a word's picture (level 1) counts for the word: the letter is not taught there
+  const isLetter = ['find', 'first', 'trace', 'chunk', 'missing'].includes(Q.task.t) && !(Q.task.t === 'trace' && Q.task.w);
   if (ok) {
     Q.locked = true; btn.classList.add('ok'); sfx.ok();
     if (Q.fill) Q.fill();

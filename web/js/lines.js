@@ -165,7 +165,7 @@ function startLines(task) {
   G = { level: lv, cols: V.cols, rows: V.rows, cell, letters: V.letters || task.ci != null || !!task.order, ci: task.ci, order: !!task.order,
         lower: task.ci != null || !!task.order, start: V.start, spawnN: V.spawn, hintAfter: V.hint,
         at: Array(V.cols * V.rows).fill(null), queue: words.slice(), colours: shuffle(LINE_COLORS), active: [], buf: [],
-        total: words.length, done: 0, sel: null, lock: true, noWord: 0, hint: null, idle: 0, tut: !S.stats.lines ? 'demo' : null };
+        total: words.length, done: 0, sel: null, lock: false, began: false, noWord: 0, hint: null, idle: 0, tut: !S.stats.lines ? 'demo' : null };
   $('lspk').innerHTML = I.speaker;
   $('llvl').innerHTML = I.star.repeat(lv);
   $('ldots').innerHTML = dotsHtml();
@@ -186,14 +186,16 @@ function startLines(task) {
   const me = G;
   (async () => {
     // the instruction, then each card bounces while its word is said (paced by the voice, not by a timer; at least
-    // a short pause each when the sound is off)
-    await Promise.all([say(ru(go1)), wait(900)]); if (!alive(me)) return;
+    // a short pause each when the sound is off). The board is open from the first moment (decided 2026-11-14): a
+    // child who starts moving the balls does not wait, and the rest of the explanation, the hand included, is dropped.
+    const off = () => !alive(me) || me.began;
+    await Promise.all([say(ru(go1)), wait(900)]); if (off()) return;
     for (const A of G.active.slice()) {
       if (A.card) bounce(A.card);
-      await Promise.all([say(en(A.w)), wait(700)]); if (!alive(me)) return;
+      await Promise.all([say(en(A.w)), wait(700)]); if (off()) return;
     }
-    await wait(300); if (!alive(me)) return;
-    if (G.tut) await demo(me); if (!alive(me)) return;
+    await wait(300); if (off()) return;
+    if (G.tut) await demo(me); if (off()) return;
     G.lock = false; idle();
   })();
 }
@@ -386,7 +388,8 @@ function linesHint() {
 function clearHint() { if (G && G.hint) { G.hint.el.remove(); G.hint = null; } }
 
 /* ---- nothing touched for a while: the instruction again (in the first game: the hand again, sooner) ---- */
-function touched() { if (G && G.tut === 'watch') G.tut = null; handOff(); idle(); }
+// the first touch also ends the opening explanation; the hand's own move is locked, so a touch never lands inside it
+function touched() { if (G) { G.began = true; G.tut = null; } handOff(); idle(); }
 function idle() {
   if (!G) return;
   clearTimeout(G.idle);

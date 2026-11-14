@@ -241,7 +241,7 @@ function finish() {
   S.stats.races = (S.stats.races || 0) + 1; if (R.won) S.stats.raceWins = (S.stats.raceWins || 0) + 1;
   S.stats.tasks++; save();
   confetti(); sfx.ok();
-  say(cheer('Финиш!'), cheer(R.won ? 'Ты первый!' : praise()));
+  say(cheer('Финиш!'), cheer(R.won ? 'Первое место!' : praise()));
   if (R.won) $('rme').insertAdjacentHTML('beforeend', `<div class="cup">${I.trophy}</div>`);
   if (more) { L.earned += more; soon(() => addCoins(more, { x: 640, y: 330 }), 500); }
   soon(nextTask, 2800);

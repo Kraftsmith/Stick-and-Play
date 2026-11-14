@@ -19,7 +19,7 @@ function summary() {
   const dv = deviceVoices();
   return `<div class="vsum">${part('ru')} · ${part('en')} · marked: ${marks.size}<br>
     Device voice now — ru: ${esc(dv.ru)}; en: ${esc(dv.en)}<br>
-    <span class="pnote">Recorded clips: ElevenLabs, app/voice.js (Russian is still read by the English voice “Matilda”, TASKS 4а.1). Lines in say(...) that are missing from the list are not here (TASKS 4а.6).</span></div>`;
+    <span class="pnote">Recorded clips: ElevenLabs, app/voice.js. English: “Matilda”. Russian: the voice chosen on 2026-11-14, with stresses and tones from app/voice-ru.js. Lines in say(...) that are missing from the list are not here (TASKS 4а.6).</span></div>`;
 }
 export function voicesHtml() {
   const rows = shown();
