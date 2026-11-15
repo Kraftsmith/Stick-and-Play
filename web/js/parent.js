@@ -61,8 +61,53 @@ const T = {
     hintsNote: 'off: no spoken instructions, only English words and praise',
     voiceOf: 'Voice:', test: 'Test', installVoices: 'Install voices', browserSpeech: 'browser speech',
     limit: 'Daily limit:', noLimit: 'no limit', langNames: { ru: 'Russian', en: 'English', uk: 'Ukrainian', de: 'German', fr: 'French', es: 'Spanish' },
+    title: 'For Parents', sleepy: 'The stickers are sleepy.<br>Come back tomorrow!', keepOn: 'Keep learning +15 min',
+  },
+  // German (TASKS 4б.4): the grown-up is "Sie", as on the account and payment screens
+  de: {
+    tap: 'Tippen Sie der Reihe nach:', settings: 'Einstellungen', progress: 'Fortschritt',
+    children: 'Kinder', changePic: 'Bild ändern', noName: 'Ohne Namen', name: 'Name', words: n => `${n} Wörter`, playingNow: 'spielt gerade',
+    switchTo: 'Wechseln', del: 'Löschen', instructions: 'Anleitungen:', callsYou: 'Das Kind nennt Sie:', add: 'Hinzufügen', cancel: 'Abbrechen',
+    addChild: '+ Kind hinzufügen', most: n => `Höchstens ${n} Kinder`, freeOne: n => `Die kostenlose Version ist für ein Kind. Mit Premium bis zu ${n}.`,
+    who: { '': 'Mama oder Papa', mom: 'Mama', dad: 'Papa', grandma: 'Oma', grandpa: 'Opa', custom: 'Andere' },
+    listen: 'Anhören',
+    askWho: 'Wer spielt, beim Start:', ask: { kids: 'Kinder wählen', parent: 'Eltern-Code abfragen', never: 'Nicht fragen' },
+    askNote: 'Der Bildschirm „Wer spielt?“ erscheint bei jedem Start der App. „Nicht fragen“ öffnet das Kind, das zuletzt gespielt hat.',
+    delAsk: name => `${name || 'Dieses Kind'} löschen? Die Sticker und Alben gehen verloren.`,
+    fileErr: {
+      big: 'Diese Datei ist zu groß für einen gespeicherten Fortschritt.',
+      unreadable: 'Diese Datei lässt sich nicht lesen. Wählen Sie eine Datei, die hier mit „Fortschritt in Datei speichern“ gesichert wurde.',
+      foreign: 'Das ist keine Fortschrittsdatei von Stick & Play.',
+      newer: 'Diese Datei stammt aus einer neueren Version des Spiels. Aktualisieren Sie das Spiel und versuchen Sie es erneut.',
+      empty: 'In dieser Datei sind keine Kinder.',
+      room: 'Auf diesem Gerät ist kein Platz, um den aktuellen Fortschritt beiseitezulegen. Es wurde nichts geändert.',
+    },
+    homeIOS: '<b>Fügen Sie das Spiel zum Home-Bildschirm hinzu.</b> Safari löscht den Fortschritt einer Website, die 7 Tage lang nicht geöffnet wurde; ein Spiel auf dem Home-Bildschirm bleibt erhalten. In Safari: die Teilen-Taste, dann „Zum Home-Bildschirm“. Das Spiel auf dem Home-Bildschirm startet leer: Speichern Sie den Fortschritt zuerst hier in einer Datei und laden Sie ihn dort.',
+    homeAndroid: '<b>Fügen Sie das Spiel zum Startbildschirm hinzu.</b> Es öffnet sich im Vollbild wie eine App und behält denselben Fortschritt.',
+    homeBtn: 'Zum Startbildschirm', homeMenu: 'Im Browsermenü (⋮): „Zum Startbildschirm hinzufügen“ oder „App installieren“.',
+    deviceH: 'Fortschritt auf diesem Gerät',
+    deviceNote: acct => `Der Fortschritt wird in diesem Browser auf diesem Gerät gespeichert${acct ? ', eine Kopie in Ihrem Konto' : ''}. Wenn Sie die Website-Daten löschen, einen anderen Browser oder eine andere Adresse nutzen, beginnt das Spiel leer.`,
+    fsave: 'Fortschritt in Datei speichern', fload: 'Aus Datei laden',
+    fileNote: 'Die Datei enthält alle Kinder auf diesem Gerät. Bewahren Sie sie als Sicherung auf oder laden Sie sie auf einem anderen Gerät.',
+    saveFail: 'Die Datei konnte nicht gespeichert werden.', shared: 'Die Datei ist bereit: Wählen Sie, wo sie gespeichert werden soll.', saved: 'In den Downloads dieses Geräts gespeichert.',
+    loadAsk: (date, kids) => `Den Fortschritt auf diesem Gerät durch die Datei${date ? ' vom ' + date : ''} ersetzen?\n\nIn der Datei: ${kids}.\nWas jetzt auf diesem Gerät ist, wird 30 Tage lang aufbewahrt.`,
+    lvl1: 'Level 1: Wörter', lvl2: 'Level 2: Buchstaben', lvl3: 'Level 3: Buchstabenteams', of: (d, n) => `${d} von ${n}`, now: l => `jetzt: ${l}`, allDone: 'alles geschafft',
+    correct: 'Richtige Antworten', engWords: (d, n) => `Englische Wörter (${d} von ${n})`, letters: (d, n) => `Buchstaben (${d} von ${n})`,
+    mistakes: 'Häufige Fehler', puzzles: 'Gelöste Puzzles', pairs: 'Paare-Spiele', lines: 'Reihen-Spiele', linesN: (g, w) => `${g} (${w} Wörter)`,
+    races: 'Rennen', racesN: (r, w) => `${r} (${w}× Erster)`, stickers: 'Gesammelte Sticker', today: 'Zeit heute', min: n => `${n} Min.`,
+    music: 'Musik:', voice: 'Stimme:', off: 'aus', hints: 'Gesprochene Hinweise:', on: 'an',
+    hintsNote: 'aus: keine gesprochenen Anleitungen, nur englische Wörter und Lob',
+    voiceOf: 'Stimme des Geräts:', test: 'Testen', installVoices: 'Stimmen installieren', browserSpeech: 'Sprachausgabe des Browsers',
+    limit: 'Tageslimit:', noLimit: 'kein Limit', langNames: { ru: 'Russisch', en: 'Englisch', uk: 'Ukrainisch', de: 'Deutsch', fr: 'Französisch', es: 'Spanisch' },
+    title: 'Für Eltern', sleepy: 'Die Sticker sind müde.<br>Bis morgen!', keepOn: 'Weiterlernen +15 Min.',
   },
 };
+// the screen when the time of the day is used up: its line and the button for the grown-up (album.js)
+export function labelSleep() {
+  const t = tx();
+  document.querySelector('.sleepmsg .t').innerHTML = t.sleepy;
+  const b = $('keepon'); b.lastChild.textContent = ' ' + t.keepOn;
+}
 const tx = () => { const t = T[S.lang]; return t ? { ...T.en, ...t } : T.en; };
 
 /* ================= parent ================= */
@@ -79,6 +124,7 @@ function renderParent() {
   code = pick([1,2,3,4,5,6,7,8,9], 3); entered = [];
   say(ph('forAdults'));
   $('lockpad').firstElementChild.firstChild.textContent = tx().tap + ' ';
+  document.querySelector('#parent .title').textContent = tx().title;
   $('lockcode').textContent = code.map(n => NAMES[n]).join(', ');
   $('keys').innerHTML = [1,2,3,4,5,6,7,8,9,0].map(n => `<button data-n="${n}">${n}</button>`).join('');
   $('keys').querySelectorAll('button').forEach(b => b.onclick = () => {

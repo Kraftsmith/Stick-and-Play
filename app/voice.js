@@ -8,6 +8,8 @@
 //                                    no API calls. New clips get the same as they are rendered)
 //      node app/voice.js --redo marked.txt  (re-render the lines in the file: "lang<TAB>text" per line, as Testing → Voices →
 //                                             Copy marked gives them)
+//      node app/voice.js --check --lang de  (speech recognition of the clips, ElevenLabs Scribe: prints the clips whose
+//                                             words differ from the text; costs recognition time, renders nothing)
 // The API key is read from ELEVENLABS_API_KEY or from the .env file in ENV_FILE (never stored here).
 const fs = require('fs'), path = require('path'), crypto = require('crypto'), { pathToFileURL } = require('url');
 const ROOT = path.join(__dirname, '..');
@@ -18,6 +20,7 @@ const ENV_FILE = process.env.ENV_FILE || 'C:/Users/User/Documents/Projects/Egzam
 const FORCE = process.argv.includes('--force');
 const LIST = process.argv.includes('--list');
 const LEVEL = process.argv.includes('--level');
+const CHECK = process.argv.includes('--check');
 const ONLY_LANG = process.argv.includes('--lang') ? process.argv[process.argv.indexOf('--lang') + 1] : null;
 const REDO = process.argv.includes('--redo') ? process.argv[process.argv.indexOf('--redo') + 1] : null;
 
@@ -28,7 +31,9 @@ const VOICES = {
   // the owner's choice of 2026-11-14 (https://elevenlabs.io/voices/CYZATuZ1tjgW8es1QfPG); it replaces "Kate" (7G0NvIkWRnU0Dqjgz13p), who
   // sounded tired. The voice must be in "My voices" of the account. Every Russian clip was rendered with it on 2026-11-14.
   ru: process.env.VOICE_RU || 'CYZATuZ1tjgW8es1QfPG',
-  // uk, de, fr, es: no voice yet (TASKS 4.6, 4б.1). A language without a voice here keeps its lines in the list (Testing →
+  // German: the owner's choice of 2026-11-15 (https://elevenlabs.io/voices/BswSp506E1rUw7uja1V5), TASKS 4б.1
+  de: process.env.VOICE_DE || 'BswSp506E1rUw7uja1V5',
+  // uk, fr, es: no voice yet (TASKS 4.6). A language without a voice here keeps its lines in the list (Testing →
   // Voices shows them as "device voice"), and no clip is rendered for it. Also VOICE_<LANG> in the environment.
 };
 for (const l of ['uk', 'de', 'fr', 'es']) if (process.env['VOICE_' + l.toUpperCase()]) VOICES[l] = process.env['VOICE_' + l.toUpperCase()];
@@ -48,7 +53,7 @@ const takesLanguageCode = model => /_v2_5$|^eleven_v3$/.test(model);
 const LINE_MODEL = {};
 // English gets no context: with one the model added to the word ("a dinosaur", "stars", "of course" for "horse"), and
 // language_code already holds its language.
-const CONTEXT = { ru: 'Мы играем и учим английские слова. Слушай внимательно.' };
+const CONTEXT = { ru: 'Мы играем и учим английские слова. Слушай внимательно.', de: 'Wir spielen und lernen englische Wörter. Hör gut zu.' };
 // Russian: the stresses and the tone of each line (decided 2026-11-14: the tones of Specs/features/sounds.md, 2б, are to be
 // followed when recording). See app/voice-ru.js.
 const RU = require('./voice-ru.js');
@@ -69,11 +74,11 @@ const textFor = text => {
 };
 // v3 takes stability 0 / 0.5 / 1 only and no other settings
 // Russian is livelier (2026-11-14: the owner wants a joyful voice; with style 0 the reading was flat)
-const LANG_SETTINGS = { ru: { stability: 0.45, style: 0.3 } };
+const LANG_SETTINGS = { ru: { stability: 0.45, style: 0.3 }, de: { stability: 0.45, style: 0.3 } };   // German like Russian (2026-11-15)
 const settingsFor = (model, lang, how) => model === 'eleven_v3' ? { stability: 0.5 } : { ...SETTINGS, ...LANG_SETTINGS[lang], speed: SPEED[lang], ...(how && how.set) };   // how.set: a line's own settings (app/voice-ru.js)
 // style 0: with more "style" the models act the line out, and a breath or a sigh is part of the act
 const SETTINGS = { stability: 0.6, similarity_boost: 0.8, style: 0, use_speaker_boost: true };
-const SPEED = { ru: 0.95, en: 0.85 };   // English a bit slower: the child is hearing new words; other languages: the model's own speed
+const SPEED = { ru: 0.95, de: 0.95, en: 0.85 };   // English a bit slower: the child is hearing new words; other languages: the model's own speed
 
 function apiKey() {
   if (process.env.ELEVENLABS_API_KEY) return process.env.ELEVENLABS_API_KEY;
@@ -111,7 +116,7 @@ function allLines({ SETS, LETTERS, CHUNKS, SHAPES, soundOf }, phrases) {
 // is measured the way loudness meters do it: the sound is weighted like the ear (little below 100 Hz, more above
 // 1.5 kHz) and only the loud part of the clip counts, the frames within 20 dB of the loudest one; pauses and the
 // tail do not pull the number down. Every clip is brought to LEVEL_DB; a limiter holds the peaks under PEAK_DB.
-// The same step cuts what is not speech: silence at both ends and, in Russian clips, a breath or a sigh the model
+// The same step cuts what is not speech: silence at both ends and, in the clips of every language but English (Russian, German), a breath or a sigh the model
 // added before or after the words (eleven_v3 does that): a stretch of 200 ms or more, apart from the words and at
 // least 10 dB weaker than them, and whatever follows the last frame within 26 dB of the loudest one. English clips
 // keep their ends: a final "s" or "t" looks the same to these rules.
@@ -137,7 +142,7 @@ function segsOf(fr, top) {
   return segs;
 }
 const weakIn = (segs, s) => s.to - s.from + 1 >= 10 && s.max < Math.max(...segs.filter(o => o !== s).map(o => o.max)) / 10;
-// a Russian clip as the model gave it: is there a breath before or after the words? (a weak stretch at either end, or
+// a clip (not English) as the model gave it: is there a breath before or after the words? (a weak stretch at either end, or
 // a quarter of a second of quiet sound after the last loud frame). Such a clip is rendered again, see the render loop.
 function breathy(f) {
   if (noFfmpeg) return false;
@@ -155,15 +160,15 @@ function level(f, lang) {
   const fr = framesOf(raw), top = Math.max(...fr);
   const segs = segsOf(fr, top);
   if (!segs.length) return null;
-  if (lang === 'ru') {
+  if (lang !== 'en') {
     const weak = s => weakIn(segs, s);
     while (segs.length > 1 && weak(segs[segs.length - 1])) segs.pop();
     while (segs.length > 1 && weak(segs[0])) segs.shift();
   }
   const dur = raw.length / RATE;
   let from = Math.max(0, segs[0].from * FRAME / RATE - 0.02), to = Math.min(dur, (segs[segs.length - 1].to + 1) * FRAME / RATE + 0.06);
-  // a Russian clip also ends 80 ms after its last frame within 26 dB of the loudest: what follows is the model's breath
-  if (lang === 'ru') { let last = fr.length - 1; while (last > 0 && fr[last] < top / 400) last--; to = Math.min(to, (last + 1) * FRAME / RATE + 0.08); }
+  // a clip that is not English also ends 80 ms after its last frame within 26 dB of the loudest: what follows is the model's breath
+  if (lang !== 'en') { let last = fr.length - 1; while (last > 0 && fr[last] < top / 400) last--; to = Math.min(to, (last + 1) * FRAME / RATE + 0.08); }
   if (from < 0.04) from = 0;
   if (dur - to < 0.04) to = dur;
   const cut = dur - (to - from);
@@ -228,6 +233,26 @@ async function tts(lang, text) {
     console.log(`levelled ${changed} clips to ${LEVEL_DB} dB`);
     writeManifest(uniq); return;
   }
+  // --check: speech recognition (ElevenLabs Scribe) of every clip of the language; prints the clips whose words differ
+  if (CHECK) {
+    const words = s => s.toLowerCase().normalize('NFC').replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(Boolean).join(' ');
+    const lines = uniq.filter(l => (!ONLY_LANG || l[0] === ONLY_LANG) && !soundIn(l[1]) && fs.existsSync(path.join(OUT, file(key(l)))));
+    let bad = 0;
+    const queue = lines.slice();
+    await Promise.all(Array.from({ length: 3 }, async () => {
+      for (let l; (l = queue.shift());) {
+        const form = new FormData();
+        form.append('model_id', 'scribe_v1'); form.append('language_code', l[0]);
+        form.append('file', new Blob([fs.readFileSync(path.join(OUT, file(key(l))))], { type: 'audio/mpeg' }), 'clip.mp3');
+        const r = await fetch('https://api.elevenlabs.io/v1/speech-to-text', { method: 'POST', headers: { 'xi-api-key': apiKey() }, body: form });
+        if (!r.ok) { bad++; console.log('FAILED', l[0], l[1], r.status, (await r.text()).slice(0, 200)); continue; }
+        const heard = (await r.json()).text || '';
+        if (words(heard) !== words(l[1])) { bad++; console.log(`DIFFERS  ${l[0]} "${l[1]}"  heard: "${heard.trim()}"`); }
+      }
+    }));
+    console.log(`checked ${lines.length} clips, ${bad} differ`);
+    return;
+  }
   let made = 0, chars = 0, failed = 0;
   const queue = todo.slice();
   await Promise.all(Array.from({ length: 2 }, async () => {
@@ -235,10 +260,10 @@ async function tts(lang, text) {
       const [lang, text] = l;
       try {
         const f = path.join(OUT, file(key(l)));
-        // a Russian clip with a breath in it is rendered again, up to four times; the last one is kept and trimmed
+        // a clip (not English) with a breath in it is rendered again, up to four times; the last one is kept and trimmed
         let tries = 0;
-        do { fs.writeFileSync(f, await tts(lang, text)); tries++; chars += text.length; } while (lang === 'ru' && tries < 4 && breathy(f));
-        const breath = lang === 'ru' && tries === 4 && breathy(f);
+        do { fs.writeFileSync(f, await tts(lang, text)); tries++; chars += text.length; } while (lang !== 'en' && tries < 4 && breathy(f));
+        const breath = lang !== 'en' && tries === 4 && breathy(f);
         level(f, lang); made++; process.stdout.write(`${lang} ${text}${tries > 1 ? `   (${tries} renders${breath ? ', still a breath: trimmed' : ''})` : ''}\n`);
       }
       catch (e) { failed++; console.error('FAILED', lang, text, e.message.slice(0, 200)); }

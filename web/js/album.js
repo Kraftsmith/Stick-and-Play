@@ -5,7 +5,7 @@ import { $, frame, pt, rectIn, capture } from './stage.js';
 import { U } from './session.js';
 import { S, save, sceneOpen, timeUp } from './state.js';
 import { stickerLocked } from './premium.js';
-import { openParent } from './parent.js';
+import { openParent, labelSleep } from './parent.js';
 import { SCENES, SETS, STICKERS, STICKER_FX, MAX_MOVING, pic, iconOf } from './data.js';
 import { BG } from './gen/art.js';
 import { I } from './icons.js';
@@ -74,6 +74,7 @@ function renderTabs() {
 function renderAlbum() {
   cancelTrial(true);
   $('album').classList.toggle('sleep', timeUp());
+  if (timeUp()) labelSleep();
   $('album').classList.toggle('closed', !sceneOpen(U.sceneId));
   if (S.lastScene !== U.sceneId) { S.lastScene = U.sceneId; save(); }
   renderTabs();
