@@ -14,6 +14,7 @@ import { go, onEnter } from './nav.js';
 import { startAt } from './lessons.js';
 import { voicesHtml, bindVoices } from './voicelist.js';
 import { WHO, ADDRESS, addressLang } from './phrases.js';
+import { langPick, wireLangPick } from './langpick.js';
 import { Cloud } from './cloud.js';
 import { mountAccount } from './account.js';
 import { saveBackupFile, readBackup, restoreBackup } from './backup.js';
@@ -109,7 +110,7 @@ function kidsHtml() {
     </div>`).join('')}
     ${adding ? `<div class="pkid new">
         <input type="text" id="akname" maxlength="12" placeholder="${t.name}" value="${esc(adding.kidName)}">
-        <span class="pkrow">${t.instructions} ${LANGS.map(([l, n]) => `<button data-al="${l}" class="${adding.lang === l ? 'on' : ''}">${n}</button>`).join('')}</span>
+        <span class="pkrow">${t.instructions} ${langPick(adding.lang)}</span>
         <span class="pkrow">${t.callsYou} ${WHO.map(k => `<button data-aw="${k}" class="${adding.parentWho === k ? 'on' : ''}">${t.who[k]}</button>`).join('')}</span>
         ${pics(adding.avatar, 'data-apick')}
         <span class="pkrow"><button class="on" id="akadd">${t.add}</button><button id="akcancel">${t.cancel}</button></span>
@@ -148,7 +149,7 @@ function kidsWire(p) {
   if ($('kadd')) $('kadd').onclick = () => { adding = { kidName: '', lang: S.lang || deviceLang(), parentWho: S.parentWho || '', avatar: freeAvatar() }; showStats(); };
   if (adding) {
     $('akname').oninput = e => { adding.kidName = e.target.value.trim(); };
-    q('[data-al]').forEach(b => b.onclick = () => { adding.lang = b.dataset.al; showStats(); });
+    wireLangPick(p, (_, l) => { adding.lang = l; showStats(); });
     q('[data-aw]').forEach(b => b.onclick = () => { adding.parentWho = b.dataset.aw; showStats(); });
     q('[data-apick]').forEach(b => b.onclick = () => { adding.avatar = b.dataset.apick; showStats(); });
     $('akadd').onclick = () => { newProfile(adding); adding = null; Cloud.onProfile(); showStats(); };

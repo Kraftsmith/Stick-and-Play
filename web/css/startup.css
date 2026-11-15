@@ -53,3 +53,8 @@
 .fracc.frpromo { margin-top: 4px; }
 .signin.promo #prCode { text-transform: uppercase; letter-spacing: 2px; }
 .signin .sinote.good { color: #466c67; font-weight: 800; font-size: 28px; }
+/* the language is one drop-down now (js/langpick.js), not a grid of buttons */
+.frlangs { display: block; flex: 1; }
+.frlangs .lpick { font-size: 28px; }
+.kidrow .frlangs { flex: none; }
+.kidrow .frlangs .lpick { font-size: 22px; }

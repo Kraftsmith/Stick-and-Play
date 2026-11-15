@@ -8,11 +8,11 @@ import { VOICE } from './js/gen/voice.js';
 import { SFX } from './js/gen/sfx.js';
 import { sfxFile } from './js/data.js';
 
-const CACHE = 'stick-and-speak-31';   // the name keeps the app's first name on purpose; 19: a sticker is bought by dragging
+const CACHE = 'stick-and-speak-32';   // the name keeps the app's first name on purpose; 19: a sticker is bought by dragging
 const SHELL = [
   './', 'index.html', 'manifest.json', 'icon.png',
   'css/base.css', 'css/home.css', 'css/learn.css', 'css/lesson.css', 'css/album.css', 'css/collection.css', 'css/parent.css', 'css/startup.css',
-  'js/main.js', 'js/version.js', 'js/phrases.js', 'js/platform.js', 'js/icons.js', 'js/gen/art.js', 'js/gen/voice.js', 'js/gen/sfx.js', 'js/data.js', 'js/util.js', 'js/stage.js',
+  'js/main.js', 'js/version.js', 'js/phrases.js', 'js/langpick.js', 'js/platform.js', 'js/icons.js', 'js/gen/art.js', 'js/gen/voice.js', 'js/gen/sfx.js', 'js/data.js', 'js/util.js', 'js/stage.js',
   'js/session.js', 'js/startup.js', 'js/profiles.js', 'js/state.js', 'js/audio.js', 'js/ui.js', 'js/nav.js', 'js/lessons.js', 'js/quiz.js', 'js/trace.js', 'js/puzzle.js',
   'js/pairs.js', 'js/lines.js', 'js/race.js', 'js/path.js', 'js/album.js', 'js/collection.js', 'js/parent.js', 'js/voicelist.js', 'js/cloud.js', 'js/account.js', 'js/doc.js', 'js/backup.js', 'js/premium.js', 'js/paywall.js',
 ];

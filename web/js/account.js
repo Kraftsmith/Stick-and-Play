@@ -4,6 +4,7 @@
 import { Cloud } from './cloud.js';
 import { Profiles } from './profiles.js';
 import { S, save, profileId, profileCards, avatarPic, deviceLang, LANGS } from './state.js';
+import { langPick, wireLangPick } from './langpick.js';
 import { toDoc, countsOf } from './doc.js';
 import { isNative, CAP } from './platform.js';
 import { esc } from './util.js';
@@ -248,12 +249,12 @@ export function mountKids(el, ids, lang, onDone) {
         <span class="kav">${avatarPic(k.avatar)}</span>
         <span class="kmid"><input type="text" data-i="${i}" maxlength="12" placeholder="${t.namePh}" value="${esc(k.name)}">
           <small>${t.counts(k.counts.words, k.counts.stickers, k.counts.albums)}</small></span>
-        <span class="frlangs">${LANGS.map(([l, n]) => `<button data-i="${i}" data-l="${l}" class="${k.lang === l ? 'on' : ''}">${n}</button>`).join('')}</span>
+        <span class="frlangs">${langPick(k.lang, `data-i="${i}"`)}</span>
       </div>`).join('')}
       <div class="sinote">${t.kidsNote}</div>
       <div class="frrow fract"><button class="btn orange" id="kidsDone">${t.done}</button></div></div>`;
     el.querySelectorAll('input[data-i]').forEach(i => i.oninput = () => { kids[+i.dataset.i].name = i.value.trim(); });
-    el.querySelectorAll('button[data-l]').forEach(b => b.onclick = () => { kids[+b.dataset.i].lang = b.dataset.l; draw(); });
+    wireLangPick(el, (p, l) => { kids[+p.dataset.i].lang = l; draw(); });
     el.querySelector('#kidsDone').onclick = () => {
       kids.forEach(k => {
         Profiles.setLocal(k.id, { kidName: k.name });

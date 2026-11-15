@@ -7,6 +7,7 @@ import { $ } from './stage.js';
 import { U } from './session.js';
 import { Profiles } from './profiles.js';
 import { S, save, useProfile, newProfile, profileCards, avatarPic, deviceLang, LANGS } from './state.js';
+import { langPick, wireLangPick } from './langpick.js';
 import { ECON, SETS } from './data.js';
 import { I } from './icons.js';
 import { today, esc } from './util.js';
@@ -114,8 +115,8 @@ function renderFirstRun() {
   const t = T[frLang] || T.en;
   $('frTitle').textContent = t.title; $('frAsk').textContent = t.ask; $('frLangL').textContent = t.lang;
   $('frName').placeholder = t.eg; $('frStart').textContent = t.start; $('frSkip').textContent = t.skip;
-  $('frLangs').innerHTML = LANGS.map(([k, name]) => `<button data-l="${k}" class="${k === frLang ? 'on' : ''}">${name}</button>`).join('');
-  $('frLangs').querySelectorAll('button').forEach(b => b.onclick = () => { frLang = b.dataset.l; renderFirstRun(); });
+  $('frLangs').innerHTML = langPick(frLang);
+  wireLangPick($('frLangs'), (p, l) => { frLang = l; renderFirstRun(); });
   // signed in with an empty cloud: the line has done its work, the child made here becomes the account's first
   $('frAcc').textContent = t.account; $('frAcc').style.display = Cloud.account() || !frWays ? 'none' : '';
   // "I have a promo code" (subscription.md 5): on Android and on the site, where the free plan has its locks and the

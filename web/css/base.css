@@ -120,3 +120,23 @@ button:active:not(:disabled):not(.locked) { translate: 0 4px; }
    stage, so it is right before the scripts have scaled the stage to the window. */
 #splash { position: fixed; inset: 0; z-index: 1000; background: #b7e8e2 url("../img/splash.jpg") center / cover no-repeat; transition: opacity .3s; }
 #splash.out { opacity: 0; pointer-events: none; }
+
+/* The language drop-down (js/langpick.js): a flag and the name, Russian without a flag. Sizes follow the row's font. */
+.lpick { position: relative; display: inline-block; font-size: inherit; }
+.lpick .lpcur, .lpick .lplist button { display: flex; align-items: center; gap: .5em; width: 100%; min-height: 2.3em; padding: .25em .7em;
+  font: inherit; font-weight: 800; color: #4e535c; background: #fff; border: 3px solid #d9d4c3; border-radius: .65em; cursor: pointer; text-align: left; }
+.lpick .lpcur { min-width: 9.5em; }
+.lpick.open .lpcur { border-color: #466c67; }
+.lpick .lparr { margin-left: auto; color: #8a867c; transition: rotate .15s; }
+.lpick.open .lparr { rotate: 180deg; }
+.lpflag { flex: none; width: 1.5em; height: 1em; border-radius: .18em; overflow: hidden; box-shadow: 0 0 0 1px #0000001f; }
+.lpflag.none { box-shadow: none; }
+.lpick .lpcur .lpflag.none { display: none; }   /* Russian chosen: just the name */
+.lpflag svg { display: block; width: 100%; height: 100%; }
+.lpick .lplist { display: none; position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 80; padding: 6px; flex-direction: column; gap: 4px;
+  background: #fff; border: 3px solid #466c67; border-radius: .75em; box-shadow: 0 12px 30px #2c3b3a40; }
+.lpick.up .lplist { top: auto; bottom: calc(100% + 6px); }
+.lpick.open .lplist { display: flex; }
+.lpick .lplist button { border-color: transparent; border-radius: .5em; min-height: 2.1em; }
+.lpick .lplist button.on { background: #e4efe0; border-color: transparent; color: #2f4f4b; }
+.lpick .lplist button:hover { background: #f3f1ea; }
