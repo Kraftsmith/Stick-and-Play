@@ -50,6 +50,13 @@
   background: linear-gradient(#ffe7a3, #f8cb6b); box-shadow: 0 7px 0 #bb9549, 0 10px 24px #4c653329; }
 
 .big .ico svg { width: 150px; height: 150px; overflow: visible; filter: drop-shadow(0 4px 3px #5a462a1f); }
+/* Larger (2026-11-15): on a phone held sideways the frame is short and the two buttons looked small. They take
+   140–640 of the 800-high frame: below the greeting (ends ~115), above the corner buttons (start ~670). */
+.homebtns { top: 140px; gap: 100px; }
+.big { width: 420px; height: 500px; border-radius: 58px; gap: 30px; font-size: 58px; }
+.big::after { inset: 14px; border-radius: 42px; }
+.big .ico { width: 290px; height: 290px; }
+.big .ico svg { width: 200px; height: 200px; }
 .hello { position: absolute; left: 0; right: 0; top: 44px; text-align: center; font-size: 56px; font-weight: 800; color: #fff; text-shadow: 0 3px 0 #0000002a; pointer-events: none; }
 
 /* The landscape as a picture in the style of the stickers (js/ui.js sets .art when the picture exists): the drawn sun and clouds go. */

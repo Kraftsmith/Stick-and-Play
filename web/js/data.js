@@ -195,7 +195,11 @@ TRACKS.lvl2 = mkTrack('Level 3', 'Второй уровень! Поехали!',
   ] };
 }));
 // the levels in order; each opens when the one before it is finished (state.js levelOpen)
-export const LEVELS = [['main', 'Level 1'], ['abc', 'Level 2'], ['lvl2', 'Level 3']];
+// The levels on the path. A level without a track in TRACKS has no lessons yet: a placeholder, always locked, even with
+// "Open all levels" (2026-11-15: the owner wants to see the path with many levels). Its id is only a name.
+export const LEVEL_COUNT = 10;
+export const LEVELS = [['main', 'Level 1'], ['abc', 'Level 2'], ['lvl2', 'Level 3'],
+  ...Array.from({ length: LEVEL_COUNT - 3 }, (_, i) => ['soon' + (i + 4), 'Level ' + (i + 4)])];
 
 // Album pages: one per sticker set. A page opens when the first sticker of its set is bought.
 export const SCENES = [

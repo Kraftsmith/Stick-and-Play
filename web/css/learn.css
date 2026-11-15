@@ -4,6 +4,12 @@
   background: #fffdf6; color: #6d5a47; box-shadow: 0 5px 0 #d8ccb4; }
 .lvtab.on { background: #f28743; color: #fff; box-shadow: 0 5px 0 #c35f22; }
 .lvtab.locked { opacity: .6; }
+/* the other levels: a circle with the number, a small lock on its corner when closed */
+#ptitle { gap: 12px; align-items: center; }
+.lvtab { position: relative; flex: none; }
+.lvtab.num { width: 66px; height: 66px; padding: 0; border-radius: 50%; font-size: 30px; }
+.lvtab .lk { position: absolute; right: -8px; top: -8px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  background: #fffdf6; box-shadow: 0 2px 0 #d8ccb4; font-size: 18px; color: #8a7a66; }
 /* lesson path */
 #path { background: #fff1d6; }
 /* one horizontal line of lessons, scrolls sideways */
@@ -48,3 +54,11 @@
 /* the next lesson past the free plan (features/subscription.md 3): it waits for a grown-up, no price and no "buy" here */
 .ln.pay { background: linear-gradient(#f3ecdc, #e2d6bd); color: #79786f; box-shadow: 0 8px 0 #c3b596, 0 0 0 9px #e9dcbc66; z-index: 2; }
 .ln.pay > :not(.mk) { filter: grayscale(.7); opacity: .75; }
+/* Larger (2026-11-15): on a phone held sideways the circles looked tiny on a path that has the whole height of the
+   screen. The circles 108 -> 170, their pictures, the theme tags and the stars with them. path.js centres the current
+   circle by half its width (LN_HALF). */
+.ln { width: 170px; height: 170px; font-size: 84px; border-width: 6px; }
+.conn { width: 84px; height: 18px; }
+.ln .mk { width: 62px; height: 62px; font-size: 42px; right: -12px; top: -14px; }
+.ttag { margin-bottom: 44px; padding: 16px 26px 14px; min-width: 150px; font-size: 64px; }
+.ttag small { font-size: 28px; }

@@ -149,6 +149,7 @@ export const learnedWords = () => TRACKS.main.lessons.flatMap((ls, i) => isDone(
 export const learnedLetters = () => TRACKS.abc.lessons.filter((ls, i) => isDone('abc', i) && ls.kind === 'letter').map(ls => ls.li);
 // a level opens when the one before it is finished (or the parent opens them all)
 export function levelOpen(tr) {
+  if (!TRACKS[tr]) return false;   // a placeholder level, no lessons yet (data.js LEVELS)
   const n = LEVELS.findIndex(l => l[0] === tr), before = n > 0 ? LEVELS[n - 1][0] : null;
   return !before || !!S.lvl2open || nextIdx(before) >= TRACKS[before].lessons.length;
 }

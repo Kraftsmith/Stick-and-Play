@@ -132,6 +132,18 @@
 .choice.letter { color: #355b60; }
 .shadowpic { filter: brightness(0) opacity(.65); }
 .shadowpic.lit { filter: none; }
+/* Larger on every screen (2026-11-15): on a phone held sideways the 800-high frame is short and the picture, the button
+   and the cards looked small, with an empty band between the prompt and the cards. Now the prompt ends at ~368 and the
+   cards start at ~414 of the frame. */
+.prompt { top: 128px; min-height: 240px; gap: 32px; }
+.speak { width: 150px; height: 150px; font-size: 76px; }
+.promptpic { font-size: 240px; }
+.shadowpic { font-size: 250px; }
+.promptword { font-size: 80px; }
+.choices { bottom: 96px; }
+.choice { width: 290px; height: 290px; font-size: 180px; }
+.choice.letter { font-size: 200px; }
+.choice.letter.two { font-size: 150px; }
 .streak { top: 44px; font-size: 34px; }
 @keyframes shake { 25% { transform: translateX(-7px); } 75% { transform: translateX(7px); } }
 

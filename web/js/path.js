@@ -13,10 +13,12 @@ import { openParent } from './parent.js';
 // "Play" on the home screen opens the path, on the level the child played last
 $('playBtn').onclick = () => { sfx.pop(); U.pathTr = S.lastTrack && TRACKS[S.lastTrack] && levelOpen(S.lastTrack) ? S.lastTrack : 'main'; go('path'); };
 /* ================= lesson path ================= */
+const LN_HALF = 85;   // half the width of a lesson circle (learn.css .ln)
 function renderPath() {
   const T = TRACKS[U.pathTr], cur = nextIdx(U.pathTr);
-  $('ptitle').innerHTML = LEVELS.map(([tr, name]) =>
-    `<button class="lvtab ${tr === U.pathTr ? 'on' : ''} ${levelOpen(tr) ? '' : 'locked'}" data-tr="${tr}">${levelOpen(tr) ? '' : I.lock + ' '}${name}</button>`).join('');
+  // the level on screen shows its name, the others only their number, so that many levels fit between the corner buttons
+  $('ptitle').innerHTML = LEVELS.map(([tr, name], n) => { const on = tr === U.pathTr, open = levelOpen(tr);
+    return `<button class="lvtab ${on ? 'on' : 'num'} ${open ? '' : 'locked'}" data-tr="${tr}" aria-label="${name}">${on ? name : n + 1}${open ? '' : `<span class="lk">${I.lock}</span>`}</button>`; }).join('');
   $('ptitle').querySelectorAll('.lvtab').forEach(b => b.onclick = () => {
     if (!levelOpen(b.dataset.tr)) { sfx.no(); return; }
     if (b.dataset.tr !== U.pathTr) { U.pathTr = b.dataset.tr; S.lastTrack = U.pathTr; save(); sfx.pop(); renderPath(); }
@@ -34,7 +36,7 @@ function renderPath() {
   }).join('') + '</div>';
   // centre the U.current lesson
   const box = $('islands'), target = box.querySelector(`.ln[data-i="${Math.min(cur, T.lessons.length - 1)}"]`);
-  box.scrollLeft = target.parentElement.offsetLeft - box.clientWidth / 2 + 54;
+  box.scrollLeft = target.parentElement.offsetLeft - box.clientWidth / 2 + LN_HALF;
   box.querySelectorAll('.ln').forEach(b => b.onclick = () => {
     if (box._dragged) return;
     const i = +b.dataset.i;
