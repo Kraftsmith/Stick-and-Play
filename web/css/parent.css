@@ -123,3 +123,6 @@
 .signin .sishow.on { background: #e4efe0; border-color: #466c67; }
 .signin .sirow input[type=password] { letter-spacing: 2px; }
 .signin .sirow input[type=password]::placeholder { letter-spacing: normal; }
+/* the language of each child in its row (startup.md 3.5) */
+.pkid .pklang .lpick { font-size: 22px; }
+.pkid .pklang .lpick .lpcur { min-width: 8.5em; min-height: 72px; border-width: 2px; border-color: #c9c7bd; border-radius: 16px; }

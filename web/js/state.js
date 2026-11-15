@@ -122,7 +122,8 @@ export function profileCards() {
   return Profiles.list().map(p => {
     const { state, local } = Profiles.load(p.id), words = (state.stats || {}).words || {};
     return { id: p.id, name: local.kidName || '', avatar: AVATARS.includes(state.avatar) ? state.avatar : AVATARS[0],
-             words: Object.values(words).filter(n => n > 0).length, playing: p.id === PID, lastPlayedAt: p.lastPlayedAt || 0 };
+             words: Object.values(words).filter(n => n > 0).length, playing: p.id === PID, lastPlayedAt: p.lastPlayedAt || 0,
+             lang: (p.id === PID ? S.lang : state.lang) || deviceLang() };
   });
 }
 

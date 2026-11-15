@@ -187,6 +187,7 @@ function kidsHtml() {
     ${kids.map(k => `<div class="pkid ${k.playing ? 'cur' : ''}">
       <button class="pav" data-av="${k.id}" title="${t.changePic}">${avatarPic(k.avatar)}</button>
       <input type="text" data-name="${k.id}" maxlength="12" placeholder="${t.noName}" value="${esc(k.name)}">
+      <span class="pklang">${langPick(k.lang, `data-lid="${k.id}"`)}</span>
       <span class="pkw">${t.words(k.words)}</span>
       ${k.playing ? `<b class="pknow">${t.playingNow}</b>` : `<button data-sw="${k.id}">${t.switchTo}</button>`}
       ${many ? `<button class="pkdel" data-del="${k.id}">${t.del}</button>` : ''}
@@ -220,6 +221,15 @@ function kidsWire(p) {
     avEdit = null; showStats();
   });
   q('[data-sw]').forEach(b => b.onclick = () => { sfx.pop(); enterHome(b.dataset.sw); });
+  // the language of each child (startup.md 3.5): the playing child hears it from the next line, and this zone turns to
+  // it at once; another child's profile keeps it for its next game. The list of the new child's form is the other one.
+  wireLangPick(p, (pick, l) => {
+    const id = pick.dataset.lid;
+    if (!id) { adding.lang = l; showStats(); return; }
+    if (id === profileId()) { S.lang = l; save(); renderHello(); }
+    else { Profiles.patch(id, { lang: l }); Cloud.markDirty(id); }
+    showStats();
+  });
   q('[data-del]').forEach(b => b.onclick = () => {
     const id = b.dataset.del, kid = profileCards().find(k => k.id === id);
     if (!confirm(tx().delAsk(kid.name))) return;
@@ -233,7 +243,6 @@ function kidsWire(p) {
   if ($('kadd')) $('kadd').onclick = () => { adding = { kidName: '', lang: S.lang || deviceLang(), parentWho: S.parentWho || '', avatar: freeAvatar() }; showStats(); };
   if (adding) {
     $('akname').oninput = e => { adding.kidName = e.target.value.trim(); };
-    wireLangPick(p, (_, l) => { adding.lang = l; showStats(); });
     q('[data-aw]').forEach(b => b.onclick = () => { adding.parentWho = b.dataset.aw; showStats(); });
     q('[data-apick]').forEach(b => b.onclick = () => { adding.avatar = b.dataset.apick; showStats(); });
     $('akadd').onclick = () => { newProfile(adding); adding = null; Cloud.onProfile(); showStats(); };
@@ -300,6 +309,7 @@ function bootHtml() {
 }
 function showStats() {
   $('lockpad').style.display = 'none'; const p = $('pstats'); p.style.display = 'block'; const t = tx();
+  document.querySelector('#parent .title').textContent = t.title;   // the language may have just changed
   const acc = S.stats.correct + S.stats.wrong ? Math.round(S.stats.correct / (S.stats.correct + S.stats.wrong) * 100) : 0;
   const words = learnedWords(), letters = learnedLetters().map(i => LETTERS[i][0]);
   const weak = Object.entries(S.stats.err).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, n]) => `${k} (${n})`);
