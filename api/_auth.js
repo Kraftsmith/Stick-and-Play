@@ -5,9 +5,10 @@
 import { betterAuth } from 'better-auth';
 import { emailOTP, bearer } from 'better-auth/plugins';
 import { Pool } from '@neondatabase/serverless';
+import { PRODUCTION, DB_URL } from './_db.js';
 
 const env = process.env;
-export const PRODUCTION = env.VERCEL_ENV === 'production';
+export { PRODUCTION };
 
 // who may call the API from a browser or a web view: the site, the two native shells, the game's first address
 export const ORIGINS = [
@@ -45,7 +46,7 @@ async function sendCode({ email, otp, type }) {
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL || undefined,   // production: https://stickandplay.kids; otherwise taken from the request
   secret: env.BETTER_AUTH_SECRET,
-  database: new Pool({ connectionString: env.DATABASE_URL }),
+  database: new Pool({ connectionString: DB_URL }),   // `main` in production, `dev` elsewhere (_db.js)
   trustedOrigins: ORIGINS,
   // The address is not confirmed at sign-up (a simple sign-in). Whoever owns the mailbox can always take the account
   // back with "Forgot password?", and a reset signs out every other session.

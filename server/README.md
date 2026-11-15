@@ -29,7 +29,8 @@
 
 | Переменная | Откуда | Статус |
 |---|---|---|
-| `DATABASE_URL`, `DATABASE_URL_UNPOOLED` и другие `PG*` | Интеграция Neon (Vercel Marketplace), ставит сама | Есть, все окружения |
+| `DATABASE_URL`, `DATABASE_URL_UNPOOLED` и другие `PG*` | Интеграция Neon (Vercel Marketplace), ставит сама; сервер читает их только в Production (ветка `main`) | Есть, все окружения |
+| `DATABASE_URL_DEV` | Ветка `dev` в Neon (2026-11-15) | Preview, Development, `.env.local` |
 | `BETTER_AUTH_SECRET` | Случайная строка, свой для каждого окружения | Есть, все окружения |
 | `BETTER_AUTH_URL` | `https://stickandplay.kids` | Есть, только Production |
 | `RESEND_API_KEY` | Ключ Resend (аккаунт Resend владельца, домен `stickandplay.kids` подтверждён 2026-11-15) | **Нет** — см. «Что осталось» |
@@ -71,7 +72,9 @@ npx @better-auth/cli generate --config api/_auth.js --output server/auth.sql
 
 и разницу нужно применить к базе вручную.
 
-**Ветка `dev` не создана.** Сейчас все окружения (Production, Preview, Development) смотрят в одну базу, ветку `main`. Пока пользователей нет, это безопасно; до выпуска нужно создать в консоли Neon ветку `dev` и поставить её адрес в `DATABASE_URL` для окружений Development и Preview.
+**Две ветки Neon (2026-11-15).** `main` — база рабочего сайта: её адрес `DATABASE_URL` ставит интеграция Neon, и сервер читает его только в Production. `dev` — для Preview, Development и своего компьютера: адрес в переменной `DATABASE_URL_DEV` (в Vercel для Preview и Development, локально в `.env.local`). Ветка создана в консоли Neon «только схема», без данных: настоящих аккаунтов родителей в ней нет, промокодов тоже. Вне Production сервер без `DATABASE_URL_DEV` не запускается и на `main` не переключается (`api/_db.js`). Схема: `server/apply.mjs` применяет к `dev`, к рабочей базе — с ключом `--production`.
+
+Интеграция Neon по-прежнему подключена ко всем трём окружениям (отвязать её от Preview и Development можно только в настройках ресурса в Vercel); её `DATABASE_URL` вне Production просто не читается. Консоль Neon открывается через Vercel: `vercel integration open neon stick-and-play-db`.
 
 ## Развёртывание
 
@@ -87,5 +90,4 @@ curl -i https://stickandplay.kids/api/profiles   # 401 без входа
 ## Что осталось
 
 1. **Resend.** Домен `stickandplay.kids` подтверждён 2026-11-15 (DNS-записи в Namecheap). Осталось положить ключ в переменную `RESEND_API_KEY` в Vercel (Production и Preview) и выложить заново.
-2. **Ветка `dev` в Neon** — см. выше.
-3. **RevenueCat**: покупки в магазинах и вызов «delete subscriber» при удалении аккаунта (TASKS 3.1, 3.2, 3.12). Промокод (`POST /api/redeem`) сделан 2026-11-14 и от RevenueCat не зависит.
+2. **RevenueCat**: покупки в магазинах и вызов «delete subscriber» при удалении аккаунта (TASKS 3.1, 3.2, 3.12). Промокод (`POST /api/redeem`) сделан 2026-11-14 и от RevenueCat не зависит.

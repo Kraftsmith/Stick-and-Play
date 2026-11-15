@@ -1,6 +1,6 @@
-// Applies the schema to the database in DATABASE_URL: the sign-in tables (auth.sql, once) and the app's tables
-// (schema.sql, safe to repeat).
-//   node --env-file=.env.local server/apply.mjs
+// Applies the schema: the sign-in tables (auth.sql, once) and the app's tables (schema.sql, safe to repeat).
+//   node --env-file=.env.local server/apply.mjs                 the Neon branch `dev` (DATABASE_URL_DEV)
+//   node --env-file=.env.local server/apply.mjs --production    the branch `main` of the live site (DATABASE_URL*)
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -8,7 +8,11 @@ import { Pool } from '@neondatabase/serverless';
 
 const here = dirname(fileURLToPath(import.meta.url));
 // the unpooled address: several statements in one call need a plain connection
-const pool = new Pool({ connectionString: process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL });
+const PROD = process.argv.includes('--production'), env = process.env;
+const url = PROD ? env.DATABASE_URL_UNPOOLED || env.DATABASE_URL : env.DATABASE_URL_DEV && env.DATABASE_URL_DEV.replace('-pooler.', '.');
+if (!url) throw new Error(PROD ? 'DATABASE_URL is not set' : 'DATABASE_URL_DEV is not set');
+console.log('database:', PROD ? 'main (production)' : 'dev');
+const pool = new Pool({ connectionString: url });
 const has = async table => (await pool.query('select to_regclass($1) as t', [`public."${table}"`])).rows[0].t !== null;
 
 if (await has('user')) console.log('auth.sql: the sign-in tables are already there, skipped');
