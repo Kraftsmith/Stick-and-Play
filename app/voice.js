@@ -33,7 +33,9 @@ const VOICES = {
   ru: process.env.VOICE_RU || 'CYZATuZ1tjgW8es1QfPG',
   // German: the owner's choice of 2026-11-15 (https://elevenlabs.io/voices/BswSp506E1rUw7uja1V5), TASKS 4б.1
   de: process.env.VOICE_DE || 'BswSp506E1rUw7uja1V5',
-  // uk, fr, es: no voice yet (TASKS 4.6). A language without a voice here keeps its lines in the list (Testing →
+  // French: the owner's choice of 2026-11-15 (https://elevenlabs.io/voices/K7gx0ylJdff0yjM2uVQS), TASKS 4в.1
+  fr: process.env.VOICE_FR || 'K7gx0ylJdff0yjM2uVQS',
+  // uk, es: no voice yet (TASKS 4.6). A language without a voice here keeps its lines in the list (Testing →
   // Voices shows them as "device voice"), and no clip is rendered for it. Also VOICE_<LANG> in the environment.
 };
 for (const l of ['uk', 'de', 'fr', 'es']) if (process.env['VOICE_' + l.toUpperCase()]) VOICES[l] = process.env['VOICE_' + l.toUpperCase()];
@@ -53,7 +55,8 @@ const takesLanguageCode = model => /_v2_5$|^eleven_v3$/.test(model);
 const LINE_MODEL = {};
 // English gets no context: with one the model added to the word ("a dinosaur", "stars", "of course" for "horse"), and
 // language_code already holds its language.
-const CONTEXT = { ru: 'Мы играем и учим английские слова. Слушай внимательно.', de: 'Wir spielen und lernen englische Wörter. Hör gut zu.' };
+const CONTEXT = { ru: 'Мы играем и учим английские слова. Слушай внимательно.', de: 'Wir spielen und lernen englische Wörter. Hör gut zu.',
+  fr: 'On joue et on apprend des mots anglais. Écoute bien.' };
 // Russian: the stresses and the tone of each line (decided 2026-11-14: the tones of Specs/features/sounds.md, 2б, are to be
 // followed when recording). See app/voice-ru.js.
 const RU = require('./voice-ru.js');
@@ -74,11 +77,11 @@ const textFor = text => {
 };
 // v3 takes stability 0 / 0.5 / 1 only and no other settings
 // Russian is livelier (2026-11-14: the owner wants a joyful voice; with style 0 the reading was flat)
-const LANG_SETTINGS = { ru: { stability: 0.45, style: 0.3 }, de: { stability: 0.45, style: 0.3 } };   // German like Russian (2026-11-15)
+const LANG_SETTINGS = { ru: { stability: 0.45, style: 0.3 }, de: { stability: 0.45, style: 0.3 }, fr: { stability: 0.45, style: 0.3 } };   // German and French like Russian (2026-11-15)
 const settingsFor = (model, lang, how) => model === 'eleven_v3' ? { stability: 0.5 } : { ...SETTINGS, ...LANG_SETTINGS[lang], speed: SPEED[lang], ...(how && how.set) };   // how.set: a line's own settings (app/voice-ru.js)
 // style 0: with more "style" the models act the line out, and a breath or a sigh is part of the act
 const SETTINGS = { stability: 0.6, similarity_boost: 0.8, style: 0, use_speaker_boost: true };
-const SPEED = { ru: 0.95, de: 0.95, en: 0.85 };   // English a bit slower: the child is hearing new words; other languages: the model's own speed
+const SPEED = { ru: 0.95, de: 0.95, fr: 0.95, en: 0.85 };   // English a bit slower: the child is hearing new words; other languages: the model's own speed
 
 function apiKey() {
   if (process.env.ELEVENLABS_API_KEY) return process.env.ELEVENLABS_API_KEY;
