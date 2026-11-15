@@ -225,38 +225,44 @@ async function pushOne(id, keepalive) {
 
 /* ================= sign-in ================= */
 let ways = null;
-// The ways to sign in this server offers: ['email', 'google', 'apple'], or [] while the server has no keys for any
-// (then the app shows no account at all). Google and Apple inside the native apps need their plugins (TASKS 2.6б,
-// 9.2); until then the apps offer the e-mail code only. Without an answer the e-mail code is assumed.
+// The ways to sign in this server offers: ['email'] (e-mail and password), or [] while it cannot send letters (then
+// the app shows no account at all). Without an answer the e-mail is assumed.
 export async function providers() {
   if (ways) return ways;
   try {
     const r = await request('GET', '/api/config');
-    ways = (r.data && r.data.providers || ['email']).filter(p => !isNative || p === 'email');
+    ways = r.data && r.data.providers || ['email'];
   } catch (e) { return ['email']; }
   return ways;
 }
-// the letter with the 6-digit code
-export async function sendCode(email) {
-  const r = await request('POST', '/api/auth/email-otp/send-verification-otp', { email, type: 'sign-in' });
-  if (r.status === 429) throw fail('often');
-  if (r.status !== 200) throw fail(r.status === 400 ? 'email' : 'server');
+const authFail = r => r.status === 429 ? fail('often') : r.status >= 500 ? fail('server') : null;
+// e-mail and password (cloud-sync.md 4.1); each resolves to what link() found
+export async function signIn(email, password) {
+  const r = await request('POST', '/api/auth/sign-in/email', { email, password });
+  if (r.status === 200 && r.data && r.data.user) return signedIn(r.data.user, r.token);
+  throw authFail(r) || fail(r.status === 400 ? 'email' : 'password');
 }
-// the code from the letter; resolves to what link() found
-export async function verifyCode(email, otp) {
-  const r = await request('POST', '/api/auth/sign-in/email-otp', { email, otp });
-  if (r.status === 429) throw fail('often');
-  if (r.status !== 200 || !r.data || !r.data.user) throw fail(r.status >= 500 ? 'server' : 'code');
-  return signedIn(r.data.user, r.token);
+export async function signUp(email, password) {
+  const r = await request('POST', '/api/auth/sign-up/email', { email, password, name: '' });
+  if (r.status === 200 && r.data && r.data.user) return signedIn(r.data.user, r.token);
+  const code = r.data && r.data.code || '';
+  throw authFail(r) || fail(/EXISTS/.test(code) ? 'exists' : /SHORT/.test(code) ? 'short' : /EMAIL/.test(code) ? 'email' : 'server');
 }
-// Google / Apple in a browser: the page leaves for the provider and comes back with ?signedin=1 (see resume())
-export async function social(provider) {
-  const back = new URL(location.href); back.searchParams.set('signedin', '1');
-  const r = await request('POST', '/api/auth/sign-in/social', { provider, callbackURL: back.href });
-  if (r.status !== 200 || !r.data || !r.data.url) throw fail('server');
-  location.href = r.data.url;
+// "Forgot password?": the letter with a 6-digit code, then the code and the new password, which also signs in
+export async function sendResetCode(email) {
+  const r = await request('POST', '/api/auth/email-otp/send-verification-otp', { email, type: 'forget-password' });
+  if (r.status !== 200) throw authFail(r) || fail('email');
 }
-// after the way back from Google / Apple: null if this start is not one, else what link() found
+export async function resetPassword(email, otp, password) {
+  const r = await request('POST', '/api/auth/email-otp/reset-password', { email, otp, password });
+  if (r.status !== 200) {
+    const code = r.data && r.data.code || '';
+    throw authFail(r) || fail(/SHORT/.test(code) ? 'short' : 'code');
+  }
+  return signIn(email, password);
+}
+// a start with ?signedin=1 (the way back from a sign-in on another page; Google and Apple used it until 2026-11-15):
+// null if this start is not one, else what link() found
 export async function resume() {
   const url = new URL(location.href);
   if (!url.searchParams.has('signedin')) return null;
@@ -377,5 +383,5 @@ export function bootPull() {
   return pull();
 }
 
-export const Cloud = { init, bootPull, onProfile, pull, push, pushSoon, markDirty, account, status, onChange, providers, sendCode, verifyCode, social, resume,
+export const Cloud = { init, bootPull, onProfile, pull, push, pushSoon, markDirty, account, status, onChange, providers, signIn, signUp, sendResetCode, resetPassword, resume,
   link, choose, signOut, deleteAccount, forget, call, sim, setSim, lastPull, cloudDocs, forceConflict, forgetVersions };

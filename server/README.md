@@ -7,7 +7,7 @@
 | Путь | Что это |
 |---|---|
 | `api/` (корень репозитория) | Функции Vercel. Файлы с `_` в начале — общий код, снаружи не видны |
-| `api/_auth.js` | Вход: Better Auth, код из письма, Google, Apple |
+| `api/_auth.js` | Вход: Better Auth, e-mail и пароль, сброс пароля кодом из письма |
 | `api/_db.js`, `api/_http.js` | База (Neon по HTTP); JSON-ответы, CORS, проверка сессии |
 | `api/auth.js` | `/api/auth/*` — обработчик Better Auth (путь приходит через rewrite из `vercel.json`) |
 | `api/config.js` | `GET /api/config` — какие способы входа включены |
@@ -32,16 +32,14 @@
 | `DATABASE_URL`, `DATABASE_URL_UNPOOLED` и другие `PG*` | Интеграция Neon (Vercel Marketplace), ставит сама | Есть, все окружения |
 | `BETTER_AUTH_SECRET` | Случайная строка, свой для каждого окружения | Есть, все окружения |
 | `BETTER_AUTH_URL` | `https://stickandplay.kids` | Есть, только Production |
-| `RESEND_API_KEY` | Интеграция Resend (Vercel Marketplace) | **Нет** — см. «Что осталось» |
+| `RESEND_API_KEY` | Ключ Resend (аккаунт Resend владельца, домен `stickandplay.kids` подтверждён 2026-11-15) | **Нет** — см. «Что осталось» |
 | `EMAIL_FROM` | Необязательная; по умолчанию `Stick & Play <login@stickandplay.kids>` | — |
-| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google Cloud Console, OAuth-клиент | **Нет** |
-| `APPLE_CLIENT_ID`, `APPLE_CLIENT_SECRET`, `APPLE_APP_BUNDLE_IDENTIFIER` | Apple Developer, Sign in with Apple | **Нет** |
 
-Способ входа включается сам, когда появляются его ключи. Пока в Production нет ни одного способа, `GET /api/config` отдаёт пустой список, и приложение не показывает ни блок «Аккаунт», ни строку «Уже есть аккаунт?».
+Вход по e-mail и паролю включается сам, когда есть ключ Resend: без писем нельзя восстановить пароль. Пока ключа в Production нет, `GET /api/config` отдаёт пустой список, и приложение не показывает ни блок «Аккаунт», ни строку «Уже есть аккаунт?». Google и Apple убраны 2026-11-15 (решение владельца).
 
 Только для своего компьютера (в `.env.local` не нужны, задаются при запуске):
 - `AUTH_RATE_LIMIT=off` — выключить лимит попыток входа: локально все запросы идут с одного адреса;
-- `AUTH_DEV_CODES=on` — печатать код входа в консоль сервера, даже если ключ Resend есть.
+- `AUTH_DEV_CODES=on` — печатать код сброса пароля в консоль сервера, даже если ключ Resend есть.
 
 ## Локальный запуск
 
@@ -51,7 +49,7 @@ vercel env pull .env.local          # переменные окружения De
 node --env-file=.env.local server/dev.mjs
 ```
 
-Открывается `http://localhost:3210/` (сайт), `http://localhost:3210/play/` (игра), `/api/` — функции. Без ключа Resend код входа печатается в консоль сервера: `[dev] sign-in code for …`.
+Открывается `http://localhost:3210/` (сайт), `http://localhost:3210/play/` (игра), `/api/` — функции. Без ключа Resend код сброса пароля печатается в консоль сервера: `[dev] forget-password code for …`.
 
 `vercel dev` делает то же самое, но на Windows требует права на создание символических ссылок (режим разработчика), поэтому есть `server/dev.mjs`.
 
@@ -88,8 +86,6 @@ curl -i https://stickandplay.kids/api/profiles   # 401 без входа
 
 ## Что осталось
 
-1. **Resend.** Принять условия интеграции в браузере: Vercel → Integrations → Resend. Затем `vercel integration add resend --name stick-and-play-mail --meta domain=stickandplay.kids --meta region=eu-west-1 --billing-plan free`. Resend покажет DNS-записи для домена; их нужно добавить у регистратора (DNS домена сейчас не у Vercel). До подтверждения домена письма не уходят.
-2. **Google и Apple.** Создать OAuth-клиенты и положить ключи в переменные окружения. Адреса возврата: `https://stickandplay.kids/api/auth/callback/google` и `…/callback/apple`.
-3. **Вход Google и Apple в нативных приложениях** (TASKS 2.6б): Capacitor-плагин и `id_token`. Не начато; пока в приложениях доступен только код из письма.
-4. **Ветка `dev` в Neon** — см. выше.
-5. **RevenueCat**: покупки в магазинах и вызов «delete subscriber» при удалении аккаунта (TASKS 3.1, 3.2, 3.12). Промокод (`POST /api/redeem`) сделан 2026-11-14 и от RevenueCat не зависит.
+1. **Resend.** Домен `stickandplay.kids` подтверждён 2026-11-15 (DNS-записи в Namecheap). Осталось положить ключ в переменную `RESEND_API_KEY` в Vercel (Production и Preview) и выложить заново.
+2. **Ветка `dev` в Neon** — см. выше.
+3. **RevenueCat**: покупки в магазинах и вызов «delete subscriber» при удалении аккаунта (TASKS 3.1, 3.2, 3.12). Промокод (`POST /api/redeem`) сделан 2026-11-14 и от RevenueCat не зависит.

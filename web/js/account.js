@@ -6,14 +6,13 @@ import { Profiles } from './profiles.js';
 import { S, save, profileId, profileCards, avatarPic, deviceLang, LANGS } from './state.js';
 import { langPick, wireLangPick } from './langpick.js';
 import { toDoc, countsOf } from './doc.js';
-import { isNative, CAP } from './platform.js';
 import { esc } from './util.js';
 
 /* ================= texts ================= */
 const T = {
-  en: { account: 'Account', intro: 'Sign in to save the progress and move it to another device.', apple: 'Sign in with Apple', google: 'Google', email: 'E-mail',
+  en: { account: 'Account', intro: 'Sign in to save the progress and move it to another device.',
+    pass: 'Password', create: 'Create account', forgot: 'Forgot password?', forgotNote: 'We will send a code to this address; with it you can set a new password.', newPass: 'New password', setPass: 'Save and sign in', passNote: 'At least 8 characters.', badPass: 'Wrong e-mail or password.', exists: 'This address already has an account. Sign in or reset the password.', short: 'The password needs at least 8 characters.', show: 'Show',
     emailPh: 'E-mail address', send: 'Send the code', codeAsk: 'The 6 digits from the letter sent to', ok: 'Sign in', back: 'Back', again: 'Send again',
-    same: 'To find the progress on another device, always sign in the same way.',
     noNet: 'No connection. Try again later.', noNetFirst: 'No connection. You can start without signing in — the progress can be connected later in the parent zone.',
     badCode: 'The code does not fit. Check it or ask for a new one.', badEmail: 'Check the address.', often: 'Too many attempts. Try again in a minute.',
     saved: 'Progress saved', notYet: 'Signed in · nothing saved yet', saving: 'Saving…', offline: 'No connection · last saved', never: 'never',
@@ -27,9 +26,9 @@ const T = {
     takeNote: 'The progress on this device is put aside for 30 days.',
     counts: (w, s, a) => `${w} words · ${s} stickers · ${a} albums`,
     kidsTitle: 'Who are these children?', kidsNote: 'Names stay on this device. They are optional.', namePh: 'Name', done: 'Done' },
-  ru: { account: 'Аккаунт', intro: 'Войдите, чтобы сохранить прогресс и перенести его на другое устройство.', apple: 'Войти через Apple', google: 'Google', email: 'E-mail',
+  ru: { account: 'Аккаунт', intro: 'Войдите, чтобы сохранить прогресс и перенести его на другое устройство.',
+    pass: 'Пароль', create: 'Создать аккаунт', forgot: 'Забыли пароль?', forgotNote: 'Пришлём на этот адрес код — с ним можно задать новый пароль.', newPass: 'Новый пароль', setPass: 'Сохранить и войти', passNote: 'Не короче 8 символов.', badPass: 'Неверный e-mail или пароль.', exists: 'На этот адрес уже есть аккаунт. Войдите или восстановите пароль.', short: 'Пароль должен быть не короче 8 символов.', show: 'Показать',
     emailPh: 'Адрес e-mail', send: 'Отправить код', codeAsk: '6 цифр из письма, отправленного на', ok: 'Войти', back: 'Назад', again: 'Отправить ещё раз',
-    same: 'Чтобы прогресс нашёлся на другом устройстве, входите одним и тем же способом.',
     noNet: 'Нет связи. Попробуйте позже.', noNetFirst: 'Нет связи. Можно начать без входа — прогресс подключится позже в родительской зоне.',
     badCode: 'Код не подошёл. Проверьте его или запросите новый.', badEmail: 'Проверьте адрес.', often: 'Слишком много попыток. Попробуйте через минуту.',
     saved: 'Прогресс сохранён', notYet: 'Вход выполнен · ещё ничего не сохранено', saving: 'Сохраняем…', offline: 'Нет связи · последнее сохранение', never: 'не было',
@@ -43,9 +42,9 @@ const T = {
     takeNote: 'Прогресс с этого устройства отложим на 30 дней.',
     counts: (w, s, a) => `слов: ${w} · стикеров: ${s} · альбомов: ${a}`,
     kidsTitle: 'Кто эти дети?', kidsNote: 'Имена остаются на этом устройстве. Их можно не вводить.', namePh: 'Имя', done: 'Готово' },
-  uk: { account: 'Акаунт', intro: 'Увійдіть, щоб зберегти прогрес і перенести його на інший пристрій.', apple: 'Увійти через Apple', google: 'Google', email: 'E-mail',
+  uk: { account: 'Акаунт', intro: 'Увійдіть, щоб зберегти прогрес і перенести його на інший пристрій.',
+    pass: 'Пароль', create: 'Створити акаунт', forgot: 'Забули пароль?', forgotNote: 'Надішлемо на цю адресу код — з ним можна задати новий пароль.', newPass: 'Новий пароль', setPass: 'Зберегти й увійти', passNote: 'Щонайменше 8 символів.', badPass: 'Неправильний e-mail або пароль.', exists: 'На цю адресу вже є акаунт. Увійдіть або відновіть пароль.', short: 'Пароль має бути не коротшим за 8 символів.', show: 'Показати',
     emailPh: 'Адреса e-mail', send: 'Надіслати код', codeAsk: '6 цифр із листа, надісланого на', ok: 'Увійти', back: 'Назад', again: 'Надіслати ще раз',
-    same: 'Щоб прогрес знайшовся на іншому пристрої, входьте тим самим способом.',
     noNet: 'Немає зв’язку. Спробуйте пізніше.', noNetFirst: 'Немає зв’язку. Можна почати без входу — прогрес підключиться пізніше в батьківській зоні.',
     badCode: 'Код не підійшов. Перевірте його або запросіть новий.', badEmail: 'Перевірте адресу.', often: 'Забагато спроб. Спробуйте за хвилину.',
     saved: 'Прогрес збережено', notYet: 'Вхід виконано · ще нічого не збережено', saving: 'Зберігаємо…', offline: 'Немає зв’язку · останнє збереження', never: 'не було',
@@ -59,9 +58,9 @@ const T = {
     takeNote: 'Прогрес із цього пристрою відкладемо на 30 днів.',
     counts: (w, s, a) => `слів: ${w} · стікерів: ${s} · альбомів: ${a}`,
     kidsTitle: 'Хто ці діти?', kidsNote: 'Імена залишаються на цьому пристрої. Їх можна не вводити.', namePh: 'Ім’я', done: 'Готово' },
-  de: { account: 'Konto', intro: 'Melden Sie sich an, um den Fortschritt zu sichern und auf ein anderes Gerät zu übertragen.', apple: 'Mit Apple anmelden', google: 'Google', email: 'E-Mail',
+  de: { account: 'Konto', intro: 'Melden Sie sich an, um den Fortschritt zu sichern und auf ein anderes Gerät zu übertragen.',
+    pass: 'Passwort', create: 'Konto erstellen', forgot: 'Passwort vergessen?', forgotNote: 'Wir senden einen Code an diese Adresse; damit können Sie ein neues Passwort festlegen.', newPass: 'Neues Passwort', setPass: 'Speichern und anmelden', passNote: 'Mindestens 8 Zeichen.', badPass: 'E-Mail oder Passwort ist falsch.', exists: 'Für diese Adresse gibt es schon ein Konto. Melden Sie sich an oder setzen Sie das Passwort zurück.', short: 'Das Passwort braucht mindestens 8 Zeichen.', show: 'Anzeigen',
     emailPh: 'E-Mail-Adresse', send: 'Code senden', codeAsk: 'Die 6 Ziffern aus der E-Mail an', ok: 'Anmelden', back: 'Zurück', again: 'Erneut senden',
-    same: 'Damit der Fortschritt auf einem anderen Gerät gefunden wird, melden Sie sich immer auf dieselbe Weise an.',
     noNet: 'Keine Verbindung. Versuchen Sie es später.', noNetFirst: 'Keine Verbindung. Sie können ohne Anmeldung beginnen — der Fortschritt lässt sich später im Elternbereich verbinden.',
     badCode: 'Der Code passt nicht. Prüfen Sie ihn oder fordern Sie einen neuen an.', badEmail: 'Prüfen Sie die Adresse.', often: 'Zu viele Versuche. Versuchen Sie es in einer Minute.',
     saved: 'Fortschritt gesichert', notYet: 'Angemeldet · noch nichts gesichert', saving: 'Wird gesichert…', offline: 'Keine Verbindung · zuletzt gesichert', never: 'nie',
@@ -75,9 +74,9 @@ const T = {
     takeNote: 'Der Fortschritt dieses Geräts wird 30 Tage aufbewahrt.',
     counts: (w, s, a) => `Wörter: ${w} · Sticker: ${s} · Alben: ${a}`,
     kidsTitle: 'Wer sind diese Kinder?', kidsNote: 'Namen bleiben auf diesem Gerät. Sie sind freiwillig.', namePh: 'Name', done: 'Fertig' },
-  fr: { account: 'Compte', intro: 'Connectez-vous pour sauvegarder la progression et la retrouver sur un autre appareil.', apple: 'Se connecter avec Apple', google: 'Google', email: 'E-mail',
+  fr: { account: 'Compte', intro: 'Connectez-vous pour sauvegarder la progression et la retrouver sur un autre appareil.',
+    pass: 'Mot de passe', create: 'Créer un compte', forgot: 'Mot de passe oublié ?', forgotNote: 'Nous enverrons un code à cette adresse ; il permet de choisir un nouveau mot de passe.', newPass: 'Nouveau mot de passe', setPass: 'Enregistrer et se connecter', passNote: '8 caractères minimum.', badPass: 'E-mail ou mot de passe incorrect.', exists: 'Cette adresse a déjà un compte. Connectez-vous ou réinitialisez le mot de passe.', short: 'Le mot de passe doit contenir au moins 8 caractères.', show: 'Afficher',
     emailPh: 'Adresse e-mail', send: 'Envoyer le code', codeAsk: 'Les 6 chiffres de l’e-mail envoyé à', ok: 'Se connecter', back: 'Retour', again: 'Renvoyer',
-    same: 'Pour retrouver la progression sur un autre appareil, connectez-vous toujours de la même façon.',
     noNet: 'Pas de connexion. Réessayez plus tard.', noNetFirst: 'Pas de connexion. Vous pouvez commencer sans vous connecter — la progression pourra être reliée plus tard dans l’espace parents.',
     badCode: 'Le code ne convient pas. Vérifiez-le ou demandez-en un nouveau.', badEmail: 'Vérifiez l’adresse.', often: 'Trop de tentatives. Réessayez dans une minute.',
     saved: 'Progression sauvegardée', notYet: 'Connecté · rien n’est encore sauvegardé', saving: 'Sauvegarde…', offline: 'Pas de connexion · dernière sauvegarde', never: 'jamais',
@@ -91,9 +90,9 @@ const T = {
     takeNote: 'La progression de cet appareil est mise de côté pendant 30 jours.',
     counts: (w, s, a) => `mots : ${w} · stickers : ${s} · albums : ${a}`,
     kidsTitle: 'Qui sont ces enfants ?', kidsNote: 'Les prénoms restent sur cet appareil. Ils sont facultatifs.', namePh: 'Prénom', done: 'Terminé' },
-  es: { account: 'Cuenta', intro: 'Inicia sesión para guardar el progreso y pasarlo a otro dispositivo.', apple: 'Iniciar sesión con Apple', google: 'Google', email: 'E-mail',
+  es: { account: 'Cuenta', intro: 'Inicia sesión para guardar el progreso y pasarlo a otro dispositivo.',
+    pass: 'Contraseña', create: 'Crear cuenta', forgot: '¿Olvidaste la contraseña?', forgotNote: 'Enviaremos un código a esta dirección; con él puedes elegir una contraseña nueva.', newPass: 'Contraseña nueva', setPass: 'Guardar y entrar', passNote: 'Al menos 8 caracteres.', badPass: 'E-mail o contraseña incorrectos.', exists: 'Esta dirección ya tiene una cuenta. Inicia sesión o restablece la contraseña.', short: 'La contraseña necesita al menos 8 caracteres.', show: 'Mostrar',
     emailPh: 'Dirección de e-mail', send: 'Enviar el código', codeAsk: 'Los 6 dígitos del correo enviado a', ok: 'Entrar', back: 'Atrás', again: 'Enviar otra vez',
-    same: 'Para encontrar el progreso en otro dispositivo, inicia sesión siempre de la misma forma.',
     noNet: 'Sin conexión. Inténtalo más tarde.', noNetFirst: 'Sin conexión. Puedes empezar sin iniciar sesión — el progreso se podrá conectar después en la zona de padres.',
     badCode: 'El código no coincide. Revísalo o pide uno nuevo.', badEmail: 'Revisa la dirección.', often: 'Demasiados intentos. Inténtalo en un minuto.',
     saved: 'Progreso guardado', notYet: 'Sesión iniciada · aún no se ha guardado nada', saving: 'Guardando…', offline: 'Sin conexión · último guardado', never: 'nunca',
@@ -114,59 +113,87 @@ function when(ms, lang) {
   const d = new Date(ms), time = d.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
   return d.toDateString() === new Date().toDateString() ? time : d.toLocaleDateString(lang, { day: 'numeric', month: 'short' }) + ', ' + time;
 }
-const errText = (e, t, firstRun) => e.kind === 'network' || e.kind === 'server' ? (firstRun ? t.noNetFirst : t.noNet) : e.kind === 'often' ? t.often : e.kind === 'email' ? t.badEmail : t.badCode;
-const isIOS = isNative ? CAP.getPlatform() === 'ios' : /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent);
+const ERR = { often: 'often', email: 'badEmail', password: 'badPass', exists: 'exists', short: 'short', code: 'badCode' };
+const errText = (e, t, firstRun) => e.kind === 'network' || e.kind === 'server' ? (firstRun ? t.noNetFirst : t.noNet) : t[ERR[e.kind]] || t.badCode;
+const MIN_PASSWORD = 8;   // as api/_auth.js
 
 /* ================= the sign-in ================= */
-// Draws the three ways to sign in into `el` and walks the parent through the e-mail code. `onDone(result)` gets what
-// Cloud.link() found; `onBack`, if given, adds a "Back" line (the first run). While a request runs the buttons are off.
+// E-mail and password (cloud-sync.md 4.1, decided 2026-11-15: no Google, no Apple). One form signs in or creates the
+// account; "Forgot password?" sends a 6-digit code, and the code with a new password signs in. `onDone(result)` gets
+// what Cloud.link() found; `onBack`, if given, adds a "Back" line (the first run). While a request runs the buttons are off.
 export function mountSignIn(el, { lang, firstRun = false, onDone, onBack }) {
   const t = text(lang);
-  let mode = 'ways', email = '', err = '', busy = false, ways = null;
+  let mode = 'form', email = '', err = '', busy = false, ways = null, shown = false;
   const draw = () => {
     if (!ways) { el.innerHTML = ''; return; }   // the server has not said yet what it offers
     const off = busy ? 'disabled' : '';
-    // Apple goes first on Apple devices (its rule when any other sign-in is offered), Google first elsewhere
-    const order = (isIOS ? ['apple', 'google', 'email'] : ['google', 'apple', 'email']).filter(w => ways.includes(w));
+    const pass = (id, ph, ac) => `<input type="${shown ? 'text' : 'password'}" id="${id}" placeholder="${ph}" autocomplete="${ac}" maxlength="128" ${off}>
+      <button class="sishow ${shown ? 'on' : ''}" id="siShow" type="button" ${off}>${t.show}</button>`;
     el.innerHTML = `<div class="signin ${busy ? 'busy' : ''}">${
-      mode === 'ways' ? `<div class="sirow">${order.map(w => `<button data-way="${w}" ${off}>${w === 'email' ? '✉ ' + t.email : t[w]}</button>`).join('')}</div>
-          ${order.length > 1 ? `<div class="sinote">${t.same}</div>` : ''}`
-      : mode === 'email' ? `<div class="sirow"><input type="email" id="siEmail" placeholder="${t.emailPh}" value="${esc(email)}" autocomplete="email" ${off}>
+      mode === 'form' ? `<div class="sirow"><input type="email" id="siEmail" placeholder="${t.emailPh}" value="${esc(email)}" autocomplete="email" ${off}></div>
+          <div class="sirow">${pass('siPass', t.pass, 'current-password')}</div>
+          <div class="sirow"><button class="on" id="siIn" ${off}>${t.ok}</button><button id="siUp" ${off}>${t.create}</button></div>
+          <div class="sinote">${t.passNote}</div>
+          <button class="silink" id="siForgot" ${off}>${t.forgot}</button>`
+      : mode === 'forgot' ? `<div class="sinote">${t.forgotNote}</div>
+          <div class="sirow"><input type="email" id="siEmail" placeholder="${t.emailPh}" value="${esc(email)}" autocomplete="email" ${off}>
           <button class="on" id="siSend" ${off}>${t.send}</button><button id="siBack" ${off}>${t.back}</button></div>`
       : `<div class="sinote">${t.codeAsk} <b>${esc(email)}</b></div>
-          <div class="sirow"><input type="text" id="siCode" inputmode="numeric" maxlength="6" placeholder="······" autocomplete="one-time-code" ${off}>
-          <button class="on" id="siOk" ${off}>${t.ok}</button><button id="siAgain" ${off}>${t.again}</button><button id="siBack" ${off}>${t.back}</button></div>`}
+          <div class="sirow"><input type="text" id="siCode" inputmode="numeric" maxlength="6" placeholder="······" autocomplete="one-time-code" ${off}></div>
+          <div class="sirow">${pass('siNew', t.newPass, 'new-password')}</div>
+          <div class="sirow"><button class="on" id="siSet" ${off}>${t.setPass}</button><button id="siAgain" ${off}>${t.again}</button><button id="siBack" ${off}>${t.back}</button></div>`}
       ${err ? `<div class="sierr">${err}</div>` : ''}
-      ${onBack && mode === 'ways' ? `<button class="silink" id="siLeave" ${off}>${t.back}</button>` : ''}</div>`;
+      ${onBack && mode === 'form' ? `<button class="silink" id="siLeave" ${off}>${t.back}</button>` : ''}</div>`;
     const on = (id, fn) => { const b = el.querySelector('#' + id); if (b) b.onclick = fn; };
-    el.querySelectorAll('[data-way]').forEach(b => b.onclick = () => {
-      err = '';
-      if (b.dataset.way === 'email') { mode = 'email'; draw(); focus('siEmail'); } else run(() => Cloud.social(b.dataset.way));
-    });
-    on('siBack', () => { mode = mode === 'code' ? 'email' : 'ways'; err = ''; draw(); });
+    const val = id => { const i = el.querySelector('#' + id); return i ? i.value : ''; };
+    const readEmail = () => { if (el.querySelector('#siEmail')) email = val('siEmail').trim(); return /^\S+@\S+\.\S+$/.test(email); };
+    on('siShow', () => { const keep = { siPass: val('siPass'), siNew: val('siNew'), siCode: val('siCode') }; readEmail(); shown = !shown; draw();
+      Object.entries(keep).forEach(([id, v]) => { const i = el.querySelector('#' + id); if (i) i.value = v; }); });
     on('siLeave', onBack);
-    const send = () => { email = el.querySelector('#siEmail') ? el.querySelector('#siEmail').value.trim() : email;
-      if (!/^\S+@\S+\.\S+$/.test(email)) { err = t.badEmail; return draw(); }
-      run(async () => { await Cloud.sendCode(email); mode = 'code'; }, 'siCode'); };
+    on('siBack', () => { mode = mode === 'reset' ? 'forgot' : 'form'; err = ''; draw(); });
+    on('siForgot', () => { readEmail(); mode = 'forgot'; err = ''; draw(); focus('siEmail'); });
+    // sign in or create: the same two fields
+    const go = up => {
+      const pw = val('siPass');
+      if (!readEmail()) { err = t.badEmail; return draw(); }
+      if (up && pw.length < MIN_PASSWORD) { err = t.short; return redraw('siPass', pw); }
+      if (!pw) { err = t.badPass; return redraw('siPass', pw); }
+      run(async () => { onDone(await (up ? Cloud.signUp(email, pw) : Cloud.signIn(email, pw))); return true; }, 'siPass');
+    };
+    on('siIn', () => go(false)); on('siUp', () => go(true));
+    const send = () => {
+      if (!readEmail()) { err = t.badEmail; return draw(); }
+      run(async () => { await Cloud.sendResetCode(email); mode = 'reset'; }, 'siCode');
+    };
     on('siSend', send); on('siAgain', send);
-    const ok = () => { const code = el.querySelector('#siCode').value.replace(/\D/g, '');
-      if (code.length !== 6) { err = t.badCode; return draw(); }
-      run(async () => { const r = await Cloud.verifyCode(email, code); onDone(r); return true; }); };
-    on('siOk', ok);
+    const set = () => {
+      const code = val('siCode').replace(/\D/g, ''), pw = val('siNew');
+      if (code.length !== 6) { err = t.badCode; return redraw('siNew', pw, code); }
+      if (pw.length < MIN_PASSWORD) { err = t.short; return redraw('siNew', pw, code); }
+      run(async () => { onDone(await Cloud.resetPassword(email, code, pw)); return true; });
+    };
+    on('siSet', set);
     const key = (id, fn) => { const i = el.querySelector('#' + id); if (i) i.onkeydown = ev => { if (ev.key === 'Enter') fn(); }; };
-    key('siEmail', send); key('siCode', ok);
+    key('siEmail', mode === 'forgot' ? send : () => focus('siPass')); key('siPass', () => go(false)); key('siCode', () => focus('siNew')); key('siNew', set);
   };
+  // after an error the typed password stays in its field
+  const redraw = (id, pw, code) => { draw(); const i = el.querySelector('#' + id); if (i) { i.value = pw; i.focus(); } if (code != null && el.querySelector('#siCode')) el.querySelector('#siCode').value = code; };
   const focus = id => { const i = el.querySelector('#' + id); if (i) i.focus(); };
   // one request at a time; an error is one line under the buttons and nothing else changes
   async function run(fn, then) {
+    const typed = ['siPass', 'siNew', 'siCode'].map(id => [id, el.querySelector('#' + id) ? el.querySelector('#' + id).value : null]);
     busy = true; err = ''; draw();
     let left = false;
     try { left = await fn(); } catch (e) { err = errText(e, t, firstRun); }
     busy = false;
-    if (!left && el.isConnected) { draw(); if (then) focus(then); }
+    if (left || !el.isConnected) return;
+    draw();
+    // after an error what was typed stays; after a step forward (the code was sent) the new fields start empty
+    if (err) typed.forEach(([id, v]) => { const i = el.querySelector('#' + id); if (i && v != null) i.value = v; });
+    focus(err && el.querySelector('#siPass') ? 'siPass' : then);
   }
   draw();
-  Cloud.providers().then(w => { ways = w; if (el.isConnected && mode === 'ways' && !busy) draw(); });
+  Cloud.providers().then(w => { ways = w; if (el.isConnected && mode === 'form' && !busy) draw(); });
 }
 
 /* ================= the Account block of the parent zone ================= */
