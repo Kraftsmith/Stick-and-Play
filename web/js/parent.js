@@ -1,23 +1,68 @@
 // The parent zone behind the code: settings, progress, testing tools; also the 15-minute extension from the sleep screen.
 import { $ } from './stage.js';
 import { U } from './session.js';
-import { S, save, detach, resetAll, nextIdx, doneCount, learnedWords, learnedLetters, uniqueOwned, parentAcc, parentDat, PARENTS,
+import { S, save, detach, resetAll, nextIdx, doneCount, learnedWords, learnedLetters, uniqueOwned,
   useProfile, profileId, newProfile, profileCards, freeAvatar, avatarPic, deviceLang, AVATARS, LANGS } from './state.js';
 import { Profiles, MAX_PROFILES } from './profiles.js';
 import { enterHome, showWho, bootLog } from './startup.js';
 import { TRACKS, LETTERS, WORDS, STICKER_N } from './data.js';
 import { pick, esc } from './util.js';
-import { say, ru, en, sfx, music, ttsState, renderMute } from './audio.js';
+import { say, ph, en, sfx, music, ttsState, renderMute, tagOf } from './audio.js';
 import { NTTS, isNative, installed, isIOS, canInstall, install, storage, storageCheck } from './platform.js';
 import { renderCoins, renderHello } from './ui.js';
 import { go, onEnter } from './nav.js';
 import { startAt } from './lessons.js';
 import { voicesHtml, bindVoices } from './voicelist.js';
+import { WHO, ADDRESS, addressLang } from './phrases.js';
 import { Cloud } from './cloud.js';
 import { mountAccount } from './account.js';
 import { saveBackupFile, readBackup, restoreBackup } from './backup.js';
 import { Premium, FREE } from './premium.js';
 import { mountPremium, premiumText } from './paywall.js';
+
+/* ================= texts ================= */
+// The Settings and Progress tabs and the lock, for the grown-up, never spoken (TASKS 4.7). The language is the child's
+// language of the instructions, like account.js and paywall.js; a text missing in a language is the English one.
+// Testing is for the developer and stays in English.
+const T = {
+  en: {
+    tap: 'Tap in order:', settings: 'Settings', progress: 'Progress', testing: 'Testing',
+    children: 'Children', changePic: 'Change the picture', noName: 'No name', name: 'Name', words: n => `${n} words`, playingNow: 'playing now',
+    switchTo: 'Switch', del: 'Delete', instructions: 'Instructions:', callsYou: 'Child calls you:', add: 'Add', cancel: 'Cancel',
+    addChild: '+ Add a child', most: n => `${n} children at most`, freeOne: n => `The free plan is for one child. Premium opens up to ${n}.`,
+    who: { '': 'Mom or Dad', mom: 'Mom', dad: 'Dad', grandma: 'Grandma', grandpa: 'Grandpa', custom: 'Other' },
+    listen: 'Listen',
+    askWho: 'Who plays at the start:', ask: { kids: 'Children choose', parent: 'Ask for the parent code', never: 'Do not ask' },
+    askNote: 'The “Who’s playing?” screen is shown every time the app starts. “Do not ask” opens the child who played last.',
+    delAsk: name => `Delete ${name || 'this child'}? The stickers and albums will be gone.`,
+    fileErr: {
+      big: 'This file is too large to be a saved progress.',
+      unreadable: 'This file cannot be read. Choose a file saved here with “Save progress to a file”.',
+      foreign: 'This is not a Stick & Play progress file.',
+      newer: 'This file was saved by a newer version of the game. Update the game and try again.',
+      empty: 'There are no children in this file.',
+      room: 'There is no room on this device to put the current progress aside. Nothing was changed.',
+    },
+    homeIOS: '<b>Add the game to the Home Screen.</b> Safari deletes the progress of a site that was not opened for 7 days; a game on the Home Screen is kept. In Safari: the Share button, then “Add to Home Screen”. The game on the Home Screen starts empty: save the progress to a file here first and load it there.',
+    homeAndroid: '<b>Add the game to the Home screen.</b> It opens full screen, like an app, and keeps the same progress.',
+    homeBtn: 'Add to Home screen', homeMenu: 'In the browser menu (⋮): “Add to Home screen” or “Install app”.',
+    deviceH: 'Progress on this device',
+    deviceNote: acct => `The progress is kept in this browser on this device${acct ? ', and a copy in your account' : ''}. Clearing the site data, another browser or another address starts an empty game.`,
+    fsave: 'Save progress to a file', fload: 'Load from a file',
+    fileNote: 'The file holds every child on this device. Keep it as a spare copy or load it on another device.',
+    saveFail: 'The file could not be saved.', shared: 'The file is ready: choose where to keep it.', saved: 'Saved to the downloads of this device.',
+    loadAsk: (date, kids) => `Replace the progress on this device with the file${date ? ' saved on ' + date : ''}?\n\nIn the file: ${kids}.\nWhat is on this device now is put aside for 30 days.`,
+    lvl1: 'Level 1: words', lvl2: 'Level 2: letters', lvl3: 'Level 3: letter teams', of: (d, n) => `${d} of ${n}`, now: l => `now: ${l}`, allDone: 'all done',
+    correct: 'Correct answers', engWords: (d, n) => `English words (${d} of ${n})`, letters: (d, n) => `Letters (${d} of ${n})`,
+    mistakes: 'Frequent mistakes', puzzles: 'Puzzles solved', pairs: 'Pairs games', lines: 'Lines games', linesN: (g, w) => `${g} (${w} words)`,
+    races: 'Races', racesN: (r, w) => `${r} (first in ${w})`, stickers: 'Stickers collected', today: 'Time today', min: n => `${n} min`,
+    music: 'Music volume:', voice: 'Voice volume:', off: 'off', hints: 'Spoken hints in lessons:', on: 'on',
+    hintsNote: 'off: no spoken instructions, only English words and praise',
+    voiceOf: 'Voice:', test: 'Test', installVoices: 'Install voices', browserSpeech: 'browser speech',
+    limit: 'Daily limit:', noLimit: 'no limit', langNames: { ru: 'Russian', en: 'English', uk: 'Ukrainian', de: 'German', fr: 'French', es: 'Spanish' },
+  },
+};
+const tx = () => { const t = T[S.lang]; return t ? { ...T.en, ...t } : T.en; };
 
 /* ================= parent ================= */
 let code = [], entered = [], parentTab = 'settings';
@@ -31,7 +76,8 @@ const NAMES = ['zero','one','two','three','four','five','six','seven','eight','n
 function renderParent() {
   $('lockpad').style.display = 'block'; $('pstats').style.display = 'none';
   code = pick([1,2,3,4,5,6,7,8,9], 3); entered = [];
-  say(ru('Это для взрослых. Позови ' + parentAcc() + '!'));
+  say(ph('forAdults'));
+  $('lockpad').firstElementChild.firstChild.textContent = tx().tap + ' ';
   $('lockcode').textContent = code.map(n => NAMES[n]).join(', ');
   $('keys').innerHTML = [1,2,3,4,5,6,7,8,9,0].map(n => `<button data-n="${n}">${n}</button>`).join('');
   $('keys').querySelectorAll('button').forEach(b => b.onclick = () => {
@@ -50,31 +96,30 @@ function renderParent() {
 }
 // Settings: the children on this device (cloud-sync.md 4.6, startup.md 3.5)
 function kidsHtml() {
-  const kids = profileCards(), many = kids.length > 1, ask = Profiles.device().askWho;
+  const t = tx(), kids = profileCards(), many = kids.length > 1, ask = Profiles.device().askWho;
   const pics = (sel, attr) => `<div class="pavs">${AVATARS.map(a => `<button ${attr}="${a}" class="${a === sel ? 'on' : ''}">${avatarPic(a)}</button>`).join('')}</div>`;
-  return `<div class="pkids"><div class="ph">Children</div>
+  return `<div class="pkids"><div class="ph">${t.children}</div>
     ${kids.map(k => `<div class="pkid ${k.playing ? 'cur' : ''}">
-      <button class="pav" data-av="${k.id}" title="Change the picture">${avatarPic(k.avatar)}</button>
-      <input type="text" data-name="${k.id}" maxlength="12" placeholder="No name" value="${esc(k.name)}">
-      <span class="pkw">${k.words} words</span>
-      ${k.playing ? '<b class="pknow">playing now</b>' : `<button data-sw="${k.id}">Switch</button>`}
-      ${many ? `<button class="pkdel" data-del="${k.id}">Delete</button>` : ''}
+      <button class="pav" data-av="${k.id}" title="${t.changePic}">${avatarPic(k.avatar)}</button>
+      <input type="text" data-name="${k.id}" maxlength="12" placeholder="${t.noName}" value="${esc(k.name)}">
+      <span class="pkw">${t.words(k.words)}</span>
+      ${k.playing ? `<b class="pknow">${t.playingNow}</b>` : `<button data-sw="${k.id}">${t.switchTo}</button>`}
+      ${many ? `<button class="pkdel" data-del="${k.id}">${t.del}</button>` : ''}
       ${avEdit === k.id ? pics(k.avatar, `data-id="${k.id}" data-pick`) : ''}
     </div>`).join('')}
     ${adding ? `<div class="pkid new">
-        <input type="text" id="akname" maxlength="12" placeholder="Name" value="${esc(adding.kidName)}">
-        <span class="pkrow">Instructions: ${LANGS.map(([l, n]) => `<button data-al="${l}" class="${adding.lang === l ? 'on' : ''}">${n}</button>`).join('')}</span>
-        <span class="pkrow">Child calls you: ${[['', 'Mom or Dad'], ...Object.entries(PARENTS).map(([k, p]) => [k, p.label])]
-          .map(([k, l]) => `<button data-aw="${k}" class="${adding.parentWho === k ? 'on' : ''}">${l}</button>`).join('')}</span>
+        <input type="text" id="akname" maxlength="12" placeholder="${t.name}" value="${esc(adding.kidName)}">
+        <span class="pkrow">${t.instructions} ${LANGS.map(([l, n]) => `<button data-al="${l}" class="${adding.lang === l ? 'on' : ''}">${n}</button>`).join('')}</span>
+        <span class="pkrow">${t.callsYou} ${WHO.map(k => `<button data-aw="${k}" class="${adding.parentWho === k ? 'on' : ''}">${t.who[k]}</button>`).join('')}</span>
         ${pics(adding.avatar, 'data-apick')}
-        <span class="pkrow"><button class="on" id="akadd">Add</button><button id="akcancel">Cancel</button></span>
+        <span class="pkrow"><button class="on" id="akadd">${t.add}</button><button id="akcancel">${t.cancel}</button></span>
       </div>`
-      : kids.length >= MAX_PROFILES ? `<span class="pnote">${MAX_PROFILES} children at most</span>`
-      : Premium.canAddProfile(kids.length) ? '<button id="kadd">+ Add a child</button>'
-      : `<span class="pnote">The free plan is for one child. Premium opens up to ${MAX_PROFILES}.</span><button id="kprem">${premiumText(S.lang).tab}</button>`}
-    ${many ? `<div class="pkrow pkask">Who plays at the start: ${[['kids', 'Children choose'], ['parent', 'Ask for the parent code'], ['never', 'Do not ask']]
+      : kids.length >= MAX_PROFILES ? `<span class="pnote">${t.most(MAX_PROFILES)}</span>`
+      : Premium.canAddProfile(kids.length) ? `<button id="kadd">${t.addChild}</button>`
+      : `<span class="pnote">${t.freeOne(MAX_PROFILES)}</span><button id="kprem">${premiumText(S.lang).tab}</button>`}
+    ${many ? `<div class="pkrow pkask">${t.askWho} ${Object.entries(t.ask)
         .map(([k, l]) => `<button data-ask="${k}" class="${ask === k ? 'on' : ''}">${l}</button>`).join('')}
-        <span class="pnote">The “Who’s playing?” screen is shown every time the app starts. “Do not ask” opens the child who played last.</span></div>` : ''}
+        <span class="pnote">${t.askNote}</span></div>` : ''}
   </div>`;
 }
 function kidsWire(p) {
@@ -92,7 +137,7 @@ function kidsWire(p) {
   q('[data-sw]').forEach(b => b.onclick = () => { sfx.pop(); enterHome(b.dataset.sw); });
   q('[data-del]').forEach(b => b.onclick = () => {
     const id = b.dataset.del, kid = profileCards().find(k => k.id === id);
-    if (!confirm(`Delete ${kid.name || 'this child'}? The stickers and albums will be gone.`)) return;
+    if (!confirm(tx().delAsk(kid.name))) return;
     const wasPlaying = id === profileId();
     if (Profiles.list().length > 1) Cloud.forget(id);   // with an account the child is deleted in the cloud too, and on the family's other devices
     if (!Profiles.remove(id)) return;
@@ -113,28 +158,19 @@ function kidsWire(p) {
 }
 // Settings: where the progress lives and how to keep it (startup.md 5.1). Web only: the native apps keep the saved
 // game in their own storage, and a WebView cannot hand a file over.
-const FILE_ERRORS = {
-  big: 'This file is too large to be a saved progress.',
-  unreadable: 'This file cannot be read. Choose a file saved here with “Save progress to a file”.',
-  foreign: 'This is not a Stick & Play progress file.',
-  newer: 'This file was saved by a newer version of the game. Update the game and try again.',
-  empty: 'There are no children in this file.',
-  room: 'There is no room on this device to put the current progress aside. Nothing was changed.',
-};
 function deviceHtml() {
   if (isNative) return '';
-  const touch = matchMedia('(pointer: coarse)').matches;
+  const t = tx(), touch = matchMedia('(pointer: coarse)').matches;
   // the hint is for a game played in a browser tab on a phone or tablet
   const home = installed || !touch ? '' : isIOS
-    ? `<div class="pnote phome"><b>Add the game to the Home Screen.</b> Safari deletes the progress of a site that was not opened for 7 days; a game on the Home Screen is kept. In Safari: the Share button, then “Add to Home Screen”. The game on the Home Screen starts empty: save the progress to a file here first and load it there.</div>`
-    : `<div class="pnote phome"><b>Add the game to the Home screen.</b> It opens full screen, like an app, and keeps the same progress. ${canInstall()
-        ? '<button id="pinstall">Add to Home screen</button>' : 'In the browser menu (⋮): “Add to Home screen” or “Install app”.'}</div>`;
-  return `<div class="pkids pdev"><div class="ph">Progress on this device</div>
-    <div class="pnote">The progress is kept in this browser on this device${Cloud.account() ? ', and a copy in your account' : ''}. Clearing the site data, another browser or another address starts an empty game.</div>
+    ? `<div class="pnote phome">${t.homeIOS}</div>`
+    : `<div class="pnote phome">${t.homeAndroid} ${canInstall() ? `<button id="pinstall">${t.homeBtn}</button>` : t.homeMenu}</div>`;
+  return `<div class="pkids pdev"><div class="ph">${t.deviceH}</div>
+    <div class="pnote">${t.deviceNote(!!Cloud.account())}</div>
     ${home}
-    <div class="pkrow"><button id="fsave">Save progress to a file</button><button id="fload">Load from a file</button>
+    <div class="pkrow"><button id="fsave">${t.fsave}</button><button id="fload">${t.fload}</button>
       <input type="file" id="ffile" accept="application/json,.json" hidden></div>
-    <div class="pnote">The file holds every child on this device. Keep it as a spare copy or load it on another device.</div>
+    <div class="pnote">${t.fileNote}</div>
     ${fileNote ? `<div class="pnote ${fileNote.bad ? 'pbad' : 'pgood'}">${esc(fileNote.text)}</div>` : ''}</div>`;
 }
 function deviceWire() {
@@ -143,19 +179,20 @@ function deviceWire() {
   $('fsave').onclick = async () => {
     save();
     const how = await saveBackupFile().catch(() => 'failed');
-    fileNote = how === 'cancelled' ? null : how === 'failed' ? { text: 'The file could not be saved.', bad: true }
-      : { text: how === 'shared' ? 'The file is ready: choose where to keep it.' : 'Saved to the downloads of this device.' };
+    const t = tx();
+    fileNote = how === 'cancelled' ? null : how === 'failed' ? { text: t.saveFail, bad: true } : { text: how === 'shared' ? t.shared : t.saved };
     showStats();
   };
   $('fload').onclick = () => $('ffile').click();
   $('ffile').onchange = async e => {
     const f = e.target.files[0]; if (!f) return;
     const got = readBackup(await f.text().catch(() => null));
-    if (got.error) { fileNote = { text: FILE_ERRORS[got.error], bad: true }; showStats(); return; }
-    const kids = got.kids.map(n => n || 'No name').join(', ');
-    if (!confirm(`Replace the progress on this device with the file${got.date ? ' saved on ' + got.date : ''}?\n\nIn the file: ${kids}.\nWhat is on this device now is put aside for 30 days.`)) { e.target.value = ''; return; }
+    const t = tx();
+    if (got.error) { fileNote = { text: t.fileErr[got.error], bad: true }; showStats(); return; }
+    const kids = got.kids.map(n => n || t.noName).join(', ');
+    if (!confirm(t.loadAsk(got.date, kids))) { e.target.value = ''; return; }
     save();
-    if (!restoreBackup(got.file, !!Cloud.account())) { fileNote = { text: FILE_ERRORS.room, bad: true }; showStats(); return; }
+    if (!restoreBackup(got.file, !!Cloud.account())) { fileNote = { text: t.fileErr.room, bad: true }; showStats(); return; }
     detach(); location.reload();
   };
 }
@@ -177,32 +214,32 @@ function bootHtml() {
   </table>`;
 }
 function showStats() {
-  $('lockpad').style.display = 'none'; const p = $('pstats'); p.style.display = 'block';
+  $('lockpad').style.display = 'none'; const p = $('pstats'); p.style.display = 'block'; const t = tx();
   const acc = S.stats.correct + S.stats.wrong ? Math.round(S.stats.correct / (S.stats.correct + S.stats.wrong) * 100) : 0;
   const words = learnedWords(), letters = learnedLetters().map(i => LETTERS[i][0]);
   const weak = Object.entries(S.stats.err).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, n]) => `${k} (${n})`);
   const mins = Math.round(S.usedMs / 60000);
   const where = tr => { const i = nextIdx(tr), n = TRACKS[tr].lessons.length;
-    return `${doneCount(tr)} of ${n}` + (i < n ? ` · now: ${TRACKS[tr].islands.find(is => is.idx.includes(i)).label}` : ' · all done'); };
+    return t.of(doneCount(tr), n) + ' · ' + (i < n ? t.now(TRACKS[tr].islands.find(is => is.idx.includes(i)).label) : t.allDone); };
   // "Unlock all" is there once the free plan has its locks (premium.js), and for a family that already has premium
   const prem = Premium.limitsOn() || Premium.state().kind !== 'free';
   if (parentTab === 'premium' && !prem) parentTab = 'settings';
-  const TABS = [['settings', 'Settings'], ...(prem ? [['premium', premiumText(S.lang).tab]] : []), ['progress', 'Progress'], ['testing', 'Testing']];
+  const TABS = [['settings', t.settings], ...(prem ? [['premium', premiumText(S.lang).tab]] : []), ['progress', t.progress], ['testing', t.testing]];
   const tabs = `<div class="ptabs">${TABS.map(([k, l]) => `<button data-pt="${k}" class="${parentTab === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
   const PROGRESS = `<table>
-    <tr><td>Level 1: words</td><td>${where('main')}</td></tr>
-    <tr><td>Level 2: letters</td><td>${where('abc')}</td></tr>
-    <tr><td>Level 3: letter teams</td><td>${where('lvl2')}</td></tr>
-    <tr><td>Correct answers</td><td>${acc}%</td></tr>
-    <tr><td>English words (${words.length} of ${WORDS.length})</td><td style="font-weight:400;font-size:22px">${words.slice(-12).join(', ') || '—'}</td></tr>
-    <tr><td>Letters (${letters.length} of ${LETTERS.length})</td><td>${letters.join(' ') || '—'}</td></tr>
-    <tr><td>Frequent mistakes</td><td style="font-weight:400;font-size:22px">${weak.join(', ') || '—'}</td></tr>
-    <tr><td>Puzzles solved</td><td>${S.stats.puzzles}</td></tr>
-    <tr><td>Pairs games</td><td>${S.stats.pairs || 0}</td></tr>
-    <tr><td>Lines games</td><td>${S.stats.lines || 0} (${S.stats.linesWords || 0} words)</td></tr>
-    <tr><td>Races</td><td>${S.stats.races || 0} (first in ${S.stats.raceWins || 0})</td></tr>
-    <tr><td>Stickers collected</td><td>${uniqueOwned()} of ${STICKER_N}</td></tr>
-    <tr><td>Time today</td><td>${mins} min</td></tr>
+    <tr><td>${t.lvl1}</td><td>${where('main')}</td></tr>
+    <tr><td>${t.lvl2}</td><td>${where('abc')}</td></tr>
+    <tr><td>${t.lvl3}</td><td>${where('lvl2')}</td></tr>
+    <tr><td>${t.correct}</td><td>${acc}%</td></tr>
+    <tr><td>${t.engWords(words.length, WORDS.length)}</td><td style="font-weight:400;font-size:22px">${words.slice(-12).join(', ') || '—'}</td></tr>
+    <tr><td>${t.letters(letters.length, LETTERS.length)}</td><td>${letters.join(' ') || '—'}</td></tr>
+    <tr><td>${t.mistakes}</td><td style="font-weight:400;font-size:22px">${weak.join(', ') || '—'}</td></tr>
+    <tr><td>${t.puzzles}</td><td>${S.stats.puzzles}</td></tr>
+    <tr><td>${t.pairs}</td><td>${S.stats.pairs || 0}</td></tr>
+    <tr><td>${t.lines}</td><td>${t.linesN(S.stats.lines || 0, S.stats.linesWords || 0)}</td></tr>
+    <tr><td>${t.races}</td><td>${t.racesN(S.stats.races || 0, S.stats.raceWins || 0)}</td></tr>
+    <tr><td>${t.stickers}</td><td>${t.of(uniqueOwned(), STICKER_N)}</td></tr>
+    <tr><td>${t.today}</td><td>${t.min(mins)}</td></tr>
   </table>`;
   const TESTING = `<div class="ptime">For testing:
     <button id="gift">+100 coins</button>
@@ -229,16 +266,18 @@ function showStats() {
     <button id="crev" class="${Cloud.sim() === 'revoked' ? 'on' : ''}">Simulate: revoked</button>
     <span class="pnote">${Cloud.account() ? esc(Cloud.account().email) + ' · ' + Cloud.status().state : 'not signed in: sign in on the Settings tab'}</span></div>
   ${cloudDoc ? `<textarea class="vout" readonly>${esc(cloudDoc)}</textarea>` : ''}${showBoot ? bootHtml() : ''}${showVoices ? voicesHtml() : ''}`;
-  const SETTINGS = '<div id="paccount"></div>' + kidsHtml() + deviceHtml() + `<div class="ptime">Music volume: <input type="range" id="mvol" min="0" max="100" step="5" value="${S.musicVol}"><b id="mvoln">${S.musicVol ? S.musicVol + '%' : 'off'}</b></div>
-  <div class="ptime">Voice volume: <input type="range" id="vvol" min="0" max="100" step="10" value="${S.voiceVol}"><b id="vvoln">${S.voiceVol ? S.voiceVol + '%' : 'off'}</b></div>
-  <div class="ptime">Spoken hints in lessons: <button id="hon" class="${S.hints ? 'on' : ''}">on</button><button id="hoff" class="${!S.hints ? 'on' : ''}">off</button>
-    <span class="pnote">off: no Russian instructions, only English words and praise</span></div>
-  <div class="ptime">Child calls you: ${[['', 'Mom or Dad'], ...Object.entries(PARENTS).map(([k, p]) => [k, p.label]), ['custom', 'Other']]
-      .map(([k, l]) => `<button data-pw="${k}" class="${S.parentWho === k ? 'on' : ''}">${l}</button>`).join('')}</div>
-  ${S.parentWho === 'custom' ? `<div class="ptime">«Позови …» <input type="text" id="pacc" maxlength="16" placeholder="тётю" value="${esc(S.parentAcc || '')}">
-      «Покажи …» <input type="text" id="pdat" maxlength="16" placeholder="тёте" value="${esc(S.parentDat || '')}"><button id="plisten">Listen</button></div>` : ''}
-  <div class="ptime">Voice: <span id="vstat">…</span> <button id="vtest">Test</button>${NTTS ? ' <button id="vinst">Install voices</button>' : ''}</div>
-  <div class="ptime">Daily limit: ${[15,20,30,0].map(m => `<button data-m="${m}" class="${S.limit === m ? 'on' : ''}">${m ? m + ' min' : 'no limit'}</button>`).join('')}</div>`;
+  // the custom forms of the grown-up: the boxes of the language whose forms the child hears (phrases.js ADDRESS)
+  const fields = ADDRESS[addressLang(S.lang)].fields, box = (id, k, v) => fields[k]
+    ? `«${esc(fields[k][0])}» <input type="text" id="${id}" maxlength="16" placeholder="${esc(fields[k][1])}" value="${esc(v || '')}">` : '';
+  const SETTINGS = '<div id="paccount"></div>' + kidsHtml() + deviceHtml() + `<div class="ptime">${t.music} <input type="range" id="mvol" min="0" max="100" step="5" value="${S.musicVol}"><b id="mvoln">${S.musicVol ? S.musicVol + '%' : t.off}</b></div>
+  <div class="ptime">${t.voice} <input type="range" id="vvol" min="0" max="100" step="10" value="${S.voiceVol}"><b id="vvoln">${S.voiceVol ? S.voiceVol + '%' : t.off}</b></div>
+  <div class="ptime">${t.hints} <button id="hon" class="${S.hints ? 'on' : ''}">${t.on}</button><button id="hoff" class="${!S.hints ? 'on' : ''}">${t.off}</button>
+    <span class="pnote">${t.hintsNote}</span></div>
+  <div class="ptime">${t.callsYou} ${[...WHO, 'custom'].map(k => `<button data-pw="${k}" class="${S.parentWho === k ? 'on' : ''}">${t.who[k]}</button>`).join('')}</div>
+  ${S.parentWho === 'custom' ? `<div class="ptime">${box('pacc', 'call', S.parentAcc)}
+      ${box('pdat', 'show', S.parentDat)}<button id="plisten">${t.listen}</button></div>` : ''}
+  <div class="ptime">${t.voiceOf} <span id="vstat">…</span> <button id="vtest">${t.test}</button>${NTTS ? ` <button id="vinst">${t.installVoices}</button>` : ''}</div>
+  <div class="ptime">${t.limit} ${[15,20,30,0].map(m => `<button data-m="${m}" class="${S.limit === m ? 'on' : ''}">${m ? t.min(m) : t.noLimit}</button>`).join('')}</div>`;
   p.innerHTML = tabs + (parentTab === 'progress' ? PROGRESS : parentTab === 'testing' ? TESTING : parentTab === 'premium' ? '<div id="ppremium"></div>' : SETTINGS);
   p.querySelectorAll('[data-pt]').forEach(b => b.onclick = () => { parentTab = b.dataset.pt; showStats(); });
   p.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { S.limit = +b.dataset.m; save(); showStats(); });
@@ -273,9 +312,9 @@ function showStats() {
     $('crev').onclick = () => { Cloud.setSim(Cloud.sim() === 'revoked' ? '' : 'revoked'); showStats(); };
   }
   if (parentTab !== 'settings') return;
-  $('mvol').oninput = e => { const v = +e.target.value; music.setVol(v); $('mvoln').textContent = v ? v + '%' : 'off'; };
-  $('vvol').oninput = e => { S.voiceVol = +e.target.value; save(); $('vvoln').textContent = S.voiceVol ? S.voiceVol + '%' : 'off'; };
-  $('vvol').onchange = () => say(ru('Привет!'), en('Hello!'));
+  $('mvol').oninput = e => { const v = +e.target.value; music.setVol(v); $('mvoln').textContent = v ? v + '%' : t.off; };
+  $('vvol').oninput = e => { S.voiceVol = +e.target.value; save(); $('vvoln').textContent = S.voiceVol ? S.voiceVol + '%' : t.off; };
+  $('vvol').onchange = () => say(ph('hello'), en('Hello!'));
   $('hon').onclick = () => { S.hints = true; save(); showStats(); };
   $('hoff').onclick = () => { S.hints = false; save(); showStats(); };
   kidsWire(p);
@@ -286,16 +325,18 @@ function showStats() {
     renderHello(); renderCoins(); renderMute(); showStats();
   } });
   p.querySelectorAll('[data-pw]').forEach(b => b.onclick = () => { S.parentWho = b.dataset.pw; save(); showStats(); });
-  if ($('pacc')) {
-    $('pacc').oninput = e => { S.parentAcc = e.target.value.trim(); save(); };
-    $('pdat').oninput = e => { S.parentDat = e.target.value.trim(); save(); };
-    $('plisten').onclick = () => say(ru('Позови ' + parentAcc() + '! Покажи ' + parentDat() + '!'));
+  if ($('plisten')) {
+    if ($('pacc')) $('pacc').oninput = e => { S.parentAcc = e.target.value.trim(); save(); };
+    if ($('pdat')) $('pdat').oninput = e => { S.parentDat = e.target.value.trim(); save(); };
+    $('plisten').onclick = () => say(ph('callShow'));
   }
-  $('vtest').onclick =() => say(ru('Привет! Это проверка.'), en('Hello! This is a test.'));
+  $('vtest').onclick =() => say(ph('test'), en('Hello! This is a test.'));
   if (NTTS) {
     $('vinst').onclick = () => NTTS.install().catch(() => {});
-    Promise.all(['ru-RU', 'en-US'].map(l => NTTS.supported(l).catch(() => false)))
-      .then(([r, e]) => { $('vstat').textContent = `Russian ${r ? '✓' : '✗'} · English ${e ? '✓' : '✗'}${ttsState.log ? ' · ' + ttsState.log : ''}`; });
-  } else $('vstat').textContent = 'browser speech';
+    // the device's voices for the child's language of the instructions and for English
+    const ls = [...new Set([S.lang || 'en', 'en'])];
+    Promise.all(ls.map(l => NTTS.supported(tagOf(l)).catch(() => false)))
+      .then(ok => { $('vstat').textContent = ls.map((l, i) => `${t.langNames[l] || l} ${ok[i] ? '✓' : '✗'}`).join(' · ') + (ttsState.log ? ' · ' + ttsState.log : ''); });
+  } else $('vstat').textContent = t.browserSpeech;
 }
 onEnter('parent', renderParent);

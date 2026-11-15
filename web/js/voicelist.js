@@ -1,25 +1,27 @@
-// Testing → Voices: every line of the voice list (app/voice.js) in Russian and English, whether it has a recorded clip
+// Testing → Voices: every line of the voice list (app/voice.js) in every language that has lines, whether it has a recorded clip
 // or is read by the device's voice, with buttons to hear either. Lines that sound wrong (an accent, a wrong stress) are
 // ticked and copied as a list, for re-recording (TASKS.md 4а).
 import { VOICE, LINES } from './gen/voice.js';
 import { hearLine, hasClip, deviceVoices, stopVoice } from './audio.js';
 import { esc } from './util.js';
+import { LANGS } from './state.js';
 
 const MARKS_KEY = 'dev-voice-marks';   // on this device only, not in a profile; not "sticker-…", so Reset everything keeps it
 const marks = new Set(JSON.parse(localStorage.getItem(MARKS_KEY) || '[]'));
 const saveMarks = () => localStorage.setItem(MARKS_KEY, JSON.stringify([...marks]));
 let filter = 'ru', playingAll = 0;
 const ALL = LINES.map(k => { const i = k.indexOf('|'); return { key: k, lang: k.slice(0, i), text: k.slice(i + 1) }; });
-const FILTERS = [['ru', 'Русский'], ['en', 'English'], ['noclip', 'No clip (device voice)'], ['marked', 'Marked'], ['all', 'All']];
+const HAS = new Set(ALL.map(l => l.lang));   // only the languages that have lines in the list
+const FILTERS = [...LANGS.filter(([l]) => HAS.has(l)), ['noclip', 'No clip (device voice)'], ['marked', 'Marked'], ['all', 'All']];
 const shown = () => ALL.filter(l => filter === 'all' ? true : filter === 'noclip' ? !hasClip(l.lang, l.text) : filter === 'marked' ? marks.has(l.key) : l.lang === filter);
 
 function summary() {
   const part = lang => { const ls = ALL.filter(l => l.lang === lang), clips = ls.filter(l => hasClip(l.lang, l.text)).length;
     return `${lang.toUpperCase()}: ${ls.length} lines, ${clips} recorded, <b>${ls.length - clips} device voice</b>`; };
   const dv = deviceVoices();
-  return `<div class="vsum">${part('ru')} · ${part('en')} · marked: ${marks.size}<br>
-    Device voice now — ru: ${esc(dv.ru)}; en: ${esc(dv.en)}<br>
-    <span class="pnote">Recorded clips: ElevenLabs, app/voice.js. English: “Matilda”. Russian: the voice chosen on 2026-11-14, with stresses and tones from app/voice-ru.js. Lines in say(...) that are missing from the list are not here (TASKS 4а.6).</span></div>`;
+  return `<div class="vsum">${[...HAS].map(part).join(' · ')} · marked: ${marks.size}<br>
+    Device voice now — ${[...HAS].map(l => `${l}: ${esc(dv[l])}`).join('; ')}<br>
+    <span class="pnote">Recorded clips: ElevenLabs, app/voice.js. English: “Matilda”. Russian: the voice chosen on 2026-11-14, with stresses and tones from app/voice-ru.js. The list is the table of js/phrases.js, the same one the game speaks from.</span></div>`;
 }
 export function voicesHtml() {
   const rows = shown();

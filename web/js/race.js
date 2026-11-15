@@ -6,7 +6,7 @@ import { RACE, RACE_LEVELS, ECON, CHUNK_WORD, picOf, emojiOf } from './data.js';
 import { I } from './icons.js';
 import { RACE_ART } from './gen/art.js';
 import { shuffle, one } from './util.js';
-import { say, ru, en, cheer, sfx, engine } from './audio.js';
+import { say, ph, en, cheer, sfx, engine } from './audio.js';
 import { confetti, addCoins } from './ui.js';
 import { go, onLeave } from './nav.js';
 import { L, later, nextTask, dotsHtml, onTask } from './lessons.js';
@@ -95,7 +95,7 @@ function startRace(task) {
     }
     it.el = el;
   });
-  const intro = [ru('Жми на кнопку, чтобы ехать быстрее!'), ru('Собирай монеты!')];
+  const intro = [ph('raceTap'), ph('raceCoins')];
   $('rspk').onclick = () => { if (R && R.cur) say(en(R.cur.w)); else say(...intro); };
   $('rgas').classList.add('wait');
   draw();
@@ -241,7 +241,7 @@ function finish() {
   S.stats.races = (S.stats.races || 0) + 1; if (R.won) S.stats.raceWins = (S.stats.raceWins || 0) + 1;
   S.stats.tasks++; save();
   confetti(); sfx.ok();
-  say(cheer('Финиш!'), cheer(R.won ? 'Первое место!' : praise()));
+  say(cheer('finish'), cheer(R.won ? 'Первое место!' : praise()));
   if (R.won) $('rme').insertAdjacentHTML('beforeend', `<div class="cup">${I.trophy}</div>`);
   if (more) { L.earned += more; soon(() => addCoins(more, { x: 640, y: 330 }), 500); }
   soon(nextTask, 2800);

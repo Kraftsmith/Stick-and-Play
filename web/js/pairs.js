@@ -5,7 +5,7 @@ import { S, save, praise } from './state.js';
 import { MEM_LEVELS, ECON, picOf, emojiOf } from './data.js';
 import { I, CARD_BACK } from './icons.js';
 import { shuffle, one } from './util.js';
-import { say, ru, en, cheer, sfx } from './audio.js';
+import { say, ph, en, cheer, sfx } from './audio.js';
 import { confetti, addCoins } from './ui.js';
 import { go } from './nav.js';
 import { L, later, nextTask, dotsHtml, onTask } from './lessons.js';
@@ -32,11 +32,11 @@ function startPairs(task) {
     c.onclick = () => flipCard(c);
     g.appendChild(c);
   });
-  const phrase = [ru('Найди парочки!')];
+  const phrase = [ph('findPairs')];
   $('mspk').onclick = () => say(...phrase);
   const begin = () => { say(...phrase); later(() => { M.lock = false; }, 400); };
   if (preview) {   // levels 1–2: show every card first, then turn them over
-    say(ru('Запомни!'));
+    say(ph('remember'));
     later(() => g.querySelectorAll('.mcard').forEach(c => c.classList.add('open')), 300);
     later(() => { g.querySelectorAll('.mcard').forEach(c => c.classList.remove('open')); begin(); }, 300 + preview);
   } else begin();
@@ -69,7 +69,7 @@ function pairsHint() {
   const pairs = Object.values(byWord), seen = pairs.filter(p => p.every(c => c._seen));
   const p = one(seen.length ? seen : pairs);
   p.forEach(c => { c.classList.remove('wob'); void c.offsetWidth; c.classList.add('wob'); });
-  say(ru('Посмотри, вот здесь!'));
+  say(ph('lookHere'));
 }
 function pairsDone() {
   if (U.current !== 'pairs') return;

@@ -10,7 +10,7 @@ import { S, save, useProfile, newProfile, profileCards, avatarPic, deviceLang, L
 import { ECON, SETS } from './data.js';
 import { I } from './icons.js';
 import { today, esc } from './util.js';
-import { say, ru, sfx, renderMute } from './audio.js';
+import { say, ph, sfx, renderMute } from './audio.js';
 import { renderHello, renderCoins, renderCollN, overlay, closeOverlay, addCoins } from './ui.js';
 import { go, onEnter } from './nav.js';
 import { Cloud } from './cloud.js';
@@ -67,12 +67,12 @@ export function enterHome(profileId, { greet = false } = {}) {
   renderHello(); renderCoins(); renderMute();
   go('home');
   Cloud.onProfile();
-  if (greet) say(ru('Привет!'));
+  if (greet) say(ph('hello'));
   // coins for the first visit of the day; not on the very first day, the child has the starting coins
   if (newDay && !firstEver) setTimeout(() => {
     if (U.current !== 'home') return;
     overlay(`<div class="bigpic">${I.coin}</div><div class="gain">+${ECON.daily} ${I.coin}</div><div class="row"><button class="btn orange" id="hi">Hi!</button></div>`);
-    $('hi').onclick = () => { closeOverlay(); addCoins(ECON.daily, { x: 600, y: 400 }); say('Монетки тебе в подарок!')   /* no "пришёл": the child may be a girl (2026-11-14) */; };
+    $('hi').onclick = () => { closeOverlay(); addCoins(ECON.daily, { x: 600, y: 400 }); say(ph('gift')); };
   }, 400);
   return true;
 }
@@ -166,7 +166,7 @@ function renderWho() {
     chosen = true; sfx.pop(); b.classList.add('picked');
     setTimeout(enter, 380);
   });
-  say(ru('Кто играет?'));
+  say(ph('whoPlays'));
 }
 onEnter('who', renderWho);
 

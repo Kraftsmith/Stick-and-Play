@@ -4,7 +4,7 @@ import { $, pt, rectIn, capture } from './stage.js';
 import { U } from './session.js';
 import { LETTERS, CHUNKS, SHAPES, sndOf, letterSound, picOf, emojiOf } from './data.js';
 import { I } from './icons.js';
-import { say, ru, en, sfx, warm } from './audio.js';
+import { say, ph, en, sfx, warm } from './audio.js';
 import { go } from './nav.js';
 import { dotsHtml, onTask } from './lessons.js';
 import { Q, setQ, answerQ } from './quiz.js';
@@ -75,19 +75,19 @@ function startTrace(task) {
   let ch, id, phrase, after;
   if (task.w) {                          // level 1: the first letter of a known word over its picture. The letter is
     ch = task.w[0].toUpperCase(); id = task.w;   // not named and has no sound here: the child hears the word only
-    phrase = [ru('Обведи!'), en(task.w)]; after = [en(task.w)];
+    phrase = [ph('trace'), en(task.w)]; after = [en(task.w)];
   } else if (task.shape != null) {       // level 1: a shape, named in English
     const name = SHAPES[task.shape][0]; ch = ''; id = name;
-    phrase = [ru('Обведи!'), en(name)]; after = [en(name)];
+    phrase = [ph('trace'), en(name)]; after = [en(name)];
   } else if (task.text) {                // level 3: a letter team ("oy") or a word ("boy")
     ch = task.text; id = CHUNKS[task.ci][0];
     const team = task.text === CHUNKS[task.ci][0];
     // in a word only the team's letters are traced: "ch" in "chick"
-    phrase = team ? [ru('Обведи буквы'), en(sndOf(task.ci) + '.')] : [ru('Обведи буквы'), en(sndOf(task.ci) + ','), ru('в слове'), en(task.text)];
+    phrase = team ? [ph('traceLetters'), en(sndOf(task.ci) + '.')] : [ph('traceLetters'), en(sndOf(task.ci) + ','), ph('inWord'), en(task.text)];
     after = team ? [en(sndOf(task.ci) + '.')] : [en(task.text + '.')];
   } else {
     const L0 = LETTERS[task.li][0]; ch = task.low ? L0.toLowerCase() : L0; id = L0;
-    phrase = [ru(task.low ? 'Обведи маленькую букву' : 'Обведи букву'), en(letterSound(task.li))]; after = [en(letterSound(task.li))];   // the sound, not the name (phonics.md, rule 1)
+    phrase = [ph(task.low ? 'traceSmall' : 'traceLetter'), en(letterSound(task.li))]; after = [en(letterSound(task.li))];   // the sound, not the name (phonics.md, rule 1)
   }
   setQ({ task, miss: 0, locked: false, wrongAt: [], drag: false, id, after, phrase });
   // one letter: the square card; two or more: the wide card

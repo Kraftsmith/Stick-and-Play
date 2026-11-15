@@ -1,0 +1,119 @@
+// Every line the app says in the language of the instructions (SPEC 3.10, Specs/languages.md): tasks, hints, praise and
+// the lines that send the child to a grown-up. English words, letters and sounds are not here: they are the same in
+// every language and are said with en(...) (audio.js).
+// One table for the game and for app/voice.js, which records a clip for every text below, so the list of clips never
+// drifts from what the game says (TASKS 4.2, 4а.6). The Russian texts are the clip keys ("ru|Найди"): change a text and
+// its clip is recorded anew.
+// No imports: app/voice.js loads this module in Node.
+
+// A new language: its texts next to the others (a missing text falls back, see chainOf), its forms of the grown-up in
+// ADDRESS, then `node app/voice.js` for its clips once it has a voice there.
+export const PHRASES = {
+  // lessons (quiz.js, trace.js, puzzle.js)
+  find:           { ru: 'Найди' },
+  dragShadow:     { ru: 'Перетащи картинку к её тени!' },
+  oddOne:         { ru: 'Что здесь лишнее? Нажми!' },
+  missingLetters: { ru: 'Каких букв не хватает?' },
+  findLetterSays: { ru: 'Найди букву, которая говорит' },
+  firstSound:     { ru: 'С какого звука начинается слово?' },
+  trace:          { ru: 'Обведи!' },
+  traceLetter:    { ru: 'Обведи букву' },
+  traceSmall:     { ru: 'Обведи маленькую букву' },
+  traceLetters:   { ru: 'Обведи буквы' },
+  inWord:         { ru: 'в слове' },
+  puzzle:         { ru: 'Собери картинку!' },
+  // after an answer
+  streak:         { ru: 'Три подряд! Бонус!' },
+  slowDown:       { ru: 'Не спеши. Послушай ещё раз.' },
+  lookHere:       { ru: 'Посмотри, вот здесь!' },
+  tryAgain:       { ru: 'Попробуй ещё!' },
+  gold:           { ru: 'Без единой ошибки! Золотая звезда!' },
+  lessonDone:     { ru: 'Урок пройден!' },
+  canBuy:         { ru: 'Можно купить стикер!' },
+  // praise: PRAISE, one at random (state.js praise())
+  bravo:          { ru: 'Браво!' },
+  right:          { ru: 'Правильно!' },
+  great:          { ru: 'Отлично!' },
+  super:          { ru: 'Супер!' },
+  // games (pairs.js, race.js, lines.js)
+  remember:       { ru: 'Запомни!' },
+  findPairs:      { ru: 'Найди парочки!' },
+  raceTap:        { ru: 'Жми на кнопку, чтобы ехать быстрее!' },
+  raceCoins:      { ru: 'Собирай монеты!' },
+  finish:         { ru: 'Финиш!' },
+  firstPlace:     { ru: 'Первое место!' },
+  linesGo:        { ru: 'Собери шарики одного цвета в ряд!' },
+  linesOrder:     { ru: 'Поставь шарики по порядку, чтобы получилось слово!' },
+  tapBall:        { ru: 'Нажми на шарик!' },
+  whereTo:        { ru: 'А теперь — куда его поставить!' },
+  // album and stickers (album.js)
+  newAlbum:       { ru: 'И новый альбом!' },
+  moreCoins:      { ru: 'Ещё немного монет! Пойдём играть?' },
+  setDone:        { ru: 'Весь набор собран!' },
+  cup:            { ru: 'Тебе кубок!' },
+  // start and the parent zone (startup.js, parent.js)
+  hello:          { ru: 'Привет!' },
+  whoPlays:       { ru: 'Кто играет?' },
+  gift:           { ru: 'Монетки тебе в подарок!' },   // no "пришёл": the child may be a girl (2026-11-14)
+  test:           { ru: 'Привет! Это проверка.' },
+  // with the grown-up: a function of the forms of ADDRESS (f.call: whom to call, f.show: whom to show)
+  showParent:     { ru: f => `Покажи ${f.show}!` },
+  sleep:          { ru: f => `Стикеры спят. Позови ${f.call}, чтобы поиграть ещё.` },
+  forAdults:      { ru: f => `Это для взрослых. Позови ${f.call}!` },
+  callShow:       { ru: f => `Позови ${f.call}! Покажи ${f.show}!` },
+};
+export const PRAISE = ['bravo', 'right', 'great', 'super'];
+
+// Who the child is told to call (SPEC 3.10, "Имя родителя"): '' = "mom or dad", 'custom' = the forms the grown-up typed.
+export const WHO = ['', 'mom', 'dad', 'grandma', 'grandpa'];
+// The grown-up in the forms each language needs: `call` ("позови маму") and `show` ("покажи маме"). A language whose
+// two forms are one word ("call Mom", "show Mom") lists only `call` in `fields`; `show` then is the same.
+// fields: the boxes for 'custom' in the parent zone: [the line around the box, an example].
+export const ADDRESS = {
+  ru: {
+    fields: { call: ['Позови …', 'тётю'], show: ['Покажи …', 'тёте'] },
+    who: {
+      '':      { call: 'маму или папу', show: 'маме или папе' },
+      mom:     { call: 'маму',          show: 'маме' },
+      dad:     { call: 'папу',          show: 'папе' },
+      grandma: { call: 'бабушку',       show: 'бабушке' },
+      grandpa: { call: 'дедушку',       show: 'дедушке' },
+    },
+  },
+};
+
+// The languages a line is looked for in: the child's, then English, then Russian (the one every line has today).
+export const chainOf = lang => [...new Set([lang, 'en', 'ru'])];
+// the language whose forms of the grown-up are used, and asked for in the parent zone
+export const addressLang = lang => chainOf(lang).find(l => ADDRESS[l]) || 'ru';
+// the forms in a language; `parent`: { who, call, show } of the child's settings (custom forms count only in addressLang)
+export function formsOf(lang, parent = {}) {
+  const a = ADDRESS[lang]; if (!a) return null;
+  if (parent.who === 'custom' && parent.call && lang === addressLang(parent.lang || lang))
+    return { call: parent.call, show: parent.show || parent.call };
+  return a.who[parent.who] || a.who[''];
+}
+// [text, lang] of a line for a child; null when no language has it
+export function phrase(id, lang, parent = {}) {
+  const p = PHRASES[id];
+  if (!p) throw new Error('no phrase ' + id);
+  for (const l of chainOf(lang)) {
+    const t = p[l];
+    if (t == null) continue;
+    if (typeof t !== 'function') return [t, l];
+    const f = formsOf(l, { ...parent, lang });
+    if (f) return [t(f), l];
+  }
+  return null;
+}
+// every text of every language, in all the forms of the grown-up the settings offer (app/voice.js records them;
+// the custom forms are read by the device's voice)
+export function allPhrases() {
+  const out = [];
+  Object.values(PHRASES).forEach(p => Object.entries(p).forEach(([l, t]) => {
+    if (typeof t !== 'function') { out.push([l, t]); return; }
+    const a = ADDRESS[l];
+    if (a) Object.values(a.who).forEach(f => out.push([l, t(f)]));
+  }));
+  return out;
+}

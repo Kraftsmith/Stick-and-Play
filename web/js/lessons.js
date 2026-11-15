@@ -167,7 +167,7 @@ export function endLesson() {
   S.prog[L.tr][L.idx] = gold || S.prog[L.tr][L.idx] === 'gold' ? 'gold' : 'ok';
   save();
   confetti(); sfx.ok();
-  say(cheer(gold ? 'Без единой ошибки! Золотая звезда!' : 'Урок пройден!'));
+  say(cheer(gold ? 'gold' : 'lessonDone'));
   if (first) { L.earned += ECON.lessonFirst; addCoins(ECON.lessonFirst, { x: 620, y: 360 }); }   // first-time lesson bonus
   const me = L;
   setTimeout(() => {
@@ -182,6 +182,6 @@ export function endLesson() {
     // only two choices: a sticker in the album, or the next lesson (the path, after the last one)
     $('nextl').onclick = () => { closeOverlay(); if (hasNext) startLesson(L.tr, L.idx + 1); else go('path'); };
     const ts = $('tostick'); if (ts) ts.onclick = () => { U.sceneId = rewardAlbum(L.ls.theme); go('album'); };
-    if (canBuy) say(cheer('Можно купить стикер!'));
+    if (canBuy) say(cheer('canBuy'));
   }, 1700);
 }

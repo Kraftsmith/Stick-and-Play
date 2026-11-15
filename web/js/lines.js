@@ -9,7 +9,7 @@ import { S, save, praise, learnedWords, learnedLetters, learnedChunks } from './
 import { LINES_LEVELS, LINE_COLORS, ECON, LETTERS, THEMES, WORD_INFO, CHUNKS, picOf, emojiOf, chunkTiles } from './data.js';
 import { I } from './icons.js';
 import { shuffle, one } from './util.js';
-import { say, ru, en, cheer, sfx } from './audio.js';
+import { say, ph, en, cheer, sfx } from './audio.js';
 import { confetti, addCoins } from './ui.js';
 import { go, onLeave } from './nav.js';
 import { L, later, nextTask, dotsHtml, onTask } from './lessons.js';
@@ -17,7 +17,7 @@ import { L, later, nextTask, dotsHtml, onTask } from './lessons.js';
 // The board is as large as the height between the top bar and the dots allows (and never wider than AREA.w); the word
 // cards stand right beside it and the two are centred together, so a wide phone has no empty band between them.
 const AREA = { y: 120, w: 840, h: 590 }, CARDS_W = 210, CARDS_GAP = 46, FRAME_W = 1280;   // frame pixels
-const SAY_GO = 'Собери шарики одного цвета в ряд!', SAY_ORDER = 'Поставь шарики по порядку, чтобы получилось слово!';
+const SAY_GO = 'linesGo', SAY_ORDER = 'linesOrder';   // phrases.js
 const HOP_MS = 400, IDLE_MS = 15000, TUT_IDLE_MS = 8000;
 
 let G = null;   // the game on the screen
@@ -182,14 +182,14 @@ function startLines(task) {
   while (G.active.length < V.start && G.queue.length) first.push(...ballsOf(enterWord(false)));
   scatter(first);
   const go1 = G.order ? SAY_ORDER : SAY_GO;
-  $('lspk').onclick = () => { if (G.tut !== 'demo') { say(ru(go1)); bounceCards(); } };
+  $('lspk').onclick = () => { if (G.tut !== 'demo') { say(ph(go1)); bounceCards(); } };
   const me = G;
   (async () => {
     // the instruction, then each card bounces while its word is said (paced by the voice, not by a timer; at least
     // a short pause each when the sound is off). The board is open from the first moment (decided 2026-11-14): a
     // child who starts moving the balls does not wait, and the rest of the explanation, the hand included, is dropped.
     const off = () => !alive(me) || me.began;
-    await Promise.all([say(ru(go1)), wait(900)]); if (off()) return;
+    await Promise.all([say(ph(go1)), wait(900)]); if (off()) return;
     for (const A of G.active.slice()) {
       if (A.card) bounce(A.card);
       await Promise.all([say(en(A.w)), wait(700)]); if (off()) return;
@@ -221,8 +221,8 @@ const handOff = () => { const h = $('lhand'); if (h) h.classList.remove('on'); }
 async function demo(me, moveIt = true) {
   const m = showMove(); if (!m) { G.tut = null; return; }
   G.lock = true;
-  hand(m.ball.k); await say(ru('Нажми на шарик!')); await wait(500); if (!alive(me)) return;
-  select(m.ball); hand(m.k); await say(ru('А теперь — куда его поставить!')); await wait(500); if (!alive(me)) return;
+  hand(m.ball.k); await say(ph('tapBall')); await wait(500); if (!alive(me)) return;
+  select(m.ball); hand(m.k); await say(ph('whereTo')); await wait(500); if (!alive(me)) return;
   handOff();
   if (moveIt) {
     await hop(m.ball, m.k, true); if (!alive(me)) return;
@@ -383,7 +383,7 @@ function linesHint() {
   $('lgrid').insertBefore(ring, $('lgrid').querySelector('.lb'));
   G.hint = { k, w: best.A.w, el: ring };
   const inner = b.el.firstChild; inner.classList.remove('wob'); void inner.offsetWidth; inner.classList.add('wob');
-  say(ru('Посмотри, вот здесь!'));
+  say(ph('lookHere'));
 }
 function clearHint() { if (G && G.hint) { G.hint.el.remove(); G.hint = null; } }
 
@@ -397,7 +397,7 @@ function idle() {
   G.idle = setTimeout(() => {
     if (!alive(me) || G.lock) return idle();
     if (tut) demo(me, false).then(() => alive(me) && idle());
-    else { say(ru(G.order ? SAY_ORDER : SAY_GO)); bounceCards(400); idle(); }
+    else { say(ph(G.order ? SAY_ORDER : SAY_GO)); bounceCards(400); idle(); }
   }, tut ? TUT_IDLE_MS : IDLE_MS);
 }
 

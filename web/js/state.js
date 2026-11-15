@@ -1,5 +1,6 @@
 // The running game of the playing profile and everything derived from it: progress, what is open, the daily limit.
-import { STICKERS, SETS, ECON, TRACKS, LEVELS, THEMES, THEME_ORDER, LETTERS, CHUNKS, PRAISE, pic } from './data.js';
+import { STICKERS, SETS, ECON, TRACKS, LEVELS, THEMES, THEME_ORDER, LETTERS, CHUNKS, pic } from './data.js';
+import { PRAISE } from './phrases.js';
 import { one } from './util.js';
 import { Profiles } from './profiles.js';
 
@@ -125,17 +126,9 @@ export function profileCards() {
   });
 }
 
-// who the child is told to call: '' = "mom or dad"; 'custom' uses parentAcc / parentDat
-export const PARENTS = {
-  mom:     { label: 'Mom',     acc: 'маму',     dat: 'маме' },
-  dad:     { label: 'Dad',     acc: 'папу',     dat: 'папе' },
-  grandma: { label: 'Grandma', acc: 'бабушку',  dat: 'бабушке' },
-  grandpa: { label: 'Grandpa', acc: 'дедушку',  dat: 'дедушке' },
-};
-// "позови маму" (whom?) and "покажи маме" (to whom?)
-export const parentAcc = () => S.parentWho === 'custom' ? (S.parentAcc || 'маму или папу') : (PARENTS[S.parentWho] || { acc: 'маму или папу' }).acc;
-export const parentDat = () => S.parentWho === 'custom' ? (S.parentDat || 'маме или папе') : (PARENTS[S.parentWho] || { dat: 'маме или папе' }).dat;
-// praise sometimes carries the child's name, not every time
+// who the child is told to call (S.parentWho, one of WHO in phrases.js); with 'custom', S.parentAcc and S.parentDat are
+// the two forms the grown-up typed, `call` and `show` of phrases.js ADDRESS (the names are kept from the Russian cases)
+// praise: the id of a line of phrases.js
 export const praise = () => one(PRAISE);   // the name is never spoken: it is shown on screen only
 
 // derived from the saved game

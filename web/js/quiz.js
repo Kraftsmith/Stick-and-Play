@@ -5,7 +5,7 @@ import { S, save, chunkPool, praise } from './state.js';
 import { WORD_INFO, THEMES, SETS, CHUNKS, CHUNK_WORD, LETTERS, ECON, pic, picOf, gapWord, markWord, sndOf, letterSound } from './data.js';
 import { I } from './icons.js';
 import { pick, shuffle, one } from './util.js';
-import { say, ru, en, cheer, sfx, warm } from './audio.js';
+import { say, ph, en, cheer, sfx, warm } from './audio.js';
 import { addCoins } from './ui.js';
 import { go } from './nav.js';
 import { L, later, nextTask, dotsHtml, letterPool, onTask } from './lessons.js';
@@ -28,10 +28,10 @@ export function showQ(task) {
     opts = shuffle([a.w, ...others]).map(w => ({ label: pic(WORD_INFO[w]), ok: w === a.w, cls: '' }));
     Q.id = a.w; Q.after = [en(a.w)];
     if (task.t === 'pick') {
-      phrase = [ru('Найди'), en(a.w)];
+      phrase = [ph('find'), en(a.w)];
       P.innerHTML = `${spk}<div class="promptword">${a.w}</div>`;
     } else {
-      phrase = [ru('Перетащи картинку к её тени!')];
+      phrase = [ph('dragShadow')];
       P.innerHTML = `${spk}<div class="shadowpic" id="shadow">${pic(a)}</div>`;
       Q.drag = true;
     }
@@ -41,7 +41,7 @@ export function showQ(task) {
     const out = one(THEMES[one(SETS.filter(s => s.group !== grp).map(s => s.id))]);
     // the sticker pictures, like every other task (the emoji here was the device's own, in another style)
     opts = shuffle([...ins.map(x => ({ label: picOf(x[0], x[1]), ok: false, cls: '' })), { label: picOf(out[0], out[1]), ok: true, cls: '' }]);
-    phrase = [ru('Что здесь лишнее? Нажми!')];
+    phrase = [ph('oddOne')];
     // no theme picture here: a farm cow above farm options looked like "find the cow"
     P.innerHTML = `${spk}<div class="promptpic">${I.think}</div>`;
     Q.id = out[0]; Q.after = [en(out[0])];
@@ -51,11 +51,11 @@ export function showQ(task) {
     opts = shuffle([ci, ...others]).map(i => ({ label: CHUNKS[i][0], ok: i === ci, cls: 'letter two' }));
     Q.id = c;
     if (task.t === 'chunk') {
-      phrase = [ru('Найди'), en(sndOf(ci) + '.')];
+      phrase = [ph('find'), en(sndOf(ci) + '.')];
       P.innerHTML = spk; Q.after = [en(`${sndOf(ci)}, as in ${CHUNKS[ci][2][0][0]}.`)];
     } else {
       const wi = CHUNK_WORD[task.w];
-      phrase = [ru('Каких букв не хватает?'), en(task.w)];
+      phrase = [ph('missingLetters'), en(task.w)];
       P.innerHTML = `${spk}<div class="promptpic">${picOf(task.w, wi.e)}</div><div class="promptword">${gapWord(task.w, c)}</div>`;
       Q.after = [en(task.w + '.')];
       Q.fill = () => { const pw = document.querySelector('#prompt .promptword'); if (pw) pw.innerHTML = markWord(task.w, c); };
@@ -67,11 +67,11 @@ export function showQ(task) {
     Q.id = ch;
     if (task.t === 'find') {
       // the sound, never the letter's name (phonics.md, rule 1)
-      phrase = [ru('Найди букву, которая говорит'), en(letterSound(task.li))];
+      phrase = [ph('findLetterSays'), en(letterSound(task.li))];
       P.innerHTML = spk; Q.after = [en(letterSound(task.li))];
     } else {
       const [w, e] = one(LETTERS[task.li][1]);
-      phrase = [ru('С какого звука начинается слово?'), en(w)];   // a whole question, then the word (was three clips, the last one a lone "?")
+      phrase = [ph('firstSound'), en(w)];   // a whole question, then the word (was three clips, the last one a lone "?")
       P.innerHTML = `${spk}<div class="promptpic">${picOf(w, e)}</div>`; Q.after = [en(letterSound(task.li)), en(w + '.')];
     }
   }
@@ -121,7 +121,7 @@ export function answerQ(btn, ok) {
     const bucket = isLetter ? S.stats.letters : S.stats.words;
     bucket[Q.id] = (bucket[Q.id] || 0) + 1;
     const r = rectIn(btn); addCoins(gain, { x: r.x + r.w / 2 - 25, y: r.y + 40 });
-    say(...Q.after, cheer(U.streak % 3 === 0 ? 'Три подряд! Бонус!' : praise()));
+    say(...Q.after, cheer(U.streak % 3 === 0 ? 'streak' : praise()));
     later(nextTask, 1900);
   } else {
     Q.miss++; L.misses++; S.stats.wrong++;
@@ -133,7 +133,7 @@ export function answerQ(btn, ok) {
     const spam = Q.wrongAt.filter(t => now - t < 1500).length >= 2;
     const okEl = document.querySelector('.screen.on .choice[data-ok="1"]'); if (Q.miss >= 2 && okEl) okEl.classList.add('hint');
     if (spam) { Q.locked = true; setTimeout(() => { Q.locked = false; }, 1800); }
-    setTimeout(() => say(ru(spam ? 'Не спеши. Послушай ещё раз.' : Q.miss >= 2 ? 'Посмотри, вот здесь!' : 'Попробуй ещё!'), ...Q.phrase), 300);
+    setTimeout(() => say(ph(spam ? 'slowDown' : Q.miss >= 2 ? 'lookHere' : 'tryAgain'), ...Q.phrase), 300);
   }
 }
 ['pick', 'pair', 'odd', 'find', 'first', 'chunk', 'missing'].forEach(t => onTask(t, showQ));

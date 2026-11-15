@@ -28,13 +28,18 @@ const VOICES = {
   // the owner's choice of 2026-11-14 (https://elevenlabs.io/voices/CYZATuZ1tjgW8es1QfPG); it replaces "Kate" (7G0NvIkWRnU0Dqjgz13p), who
   // sounded tired. The voice must be in "My voices" of the account. Every Russian clip was rendered with it on 2026-11-14.
   ru: process.env.VOICE_RU || 'CYZATuZ1tjgW8es1QfPG',
+  // uk, de, fr, es: no voice yet (TASKS 4.6, 4б.1). A language without a voice here keeps its lines in the list (Testing →
+  // Voices shows them as "device voice"), and no clip is rendered for it. Also VOICE_<LANG> in the environment.
 };
+for (const l of ['uk', 'de', 'fr', 'es']) if (process.env['VOICE_' + l.toUpperCase()]) VOICES[l] = process.env['VOICE_' + l.toUpperCase()];
 // ---- model, one per language. English must enforce the language: eleven_multilingual_v2 ignores language_code and
 // guesses the language from the text, and a lone English word has nothing to guess from ("kite" came out as Italian
 // "ki-te"). Only Turbo v2.5 and Flash v2.5 honour language_code, so English stays on Turbo v2.5.
 // Russian: whole Russian sentences leave nothing to guess, and Turbo v2.5 read them with an accent and wrong stresses;
 // from 2026-11-12 Russian lines use Multilingual v2 (TASKS 4а.2). Every clip was re-rendered on 2026-11-14 (TASKS 4а.0б).
+// Any other language starts on Multilingual v2, like Russian: its lines are whole sentences (choose per language, 4б.1).
 const MODELS = { en: process.env.VOICE_MODEL_EN || 'eleven_turbo_v2_5', ru: process.env.VOICE_MODEL_RU || 'eleven_multilingual_v2' };
+const modelFor = lang => process.env['VOICE_MODEL_' + lang.toUpperCase()] || MODELS[lang] || 'eleven_multilingual_v2';
 const takesLanguageCode = model => /_v2_5$|^eleven_v3$/.test(model);
 // One model for every line of a language (2026-11-14). Until then eight short Russian lines had eleven_v3: it kept the
 // Russian accent on a word or two, but it sounded like another speaker next to the rest and added breaths and sighs
@@ -55,7 +60,7 @@ const ARPABET = { s: 'S', a: 'AE1', t: 'T', p: 'P', i: 'IH1', n: 'N', m: 'M', d:
   b: 'B', f: 'F', l: 'L', j: 'JH', v: 'V', w: 'W', y: 'Y', z: 'Z', ks: 'K S' };
 const soundIn = text => (/^\/([a-z]+)\/$/.exec(text) || [])[1];
 const SOUND_MODEL = process.env.VOICE_MODEL_SOUND || 'eleven_flash_v2';
-const modelOf = (lang, text) => soundIn(text) ? SOUND_MODEL : LINE_MODEL[lang + '|' + text] || MODELS[lang];
+const modelOf = (lang, text) => soundIn(text) ? SOUND_MODEL : LINE_MODEL[lang + '|' + text] || modelFor(lang);
 // what is sent to the model for a line: the line itself, or the phoneme tag of a sound
 const textFor = text => {
   const s = soundIn(text); if (!s) return text;
@@ -68,7 +73,7 @@ const LANG_SETTINGS = { ru: { stability: 0.45, style: 0.3 } };
 const settingsFor = (model, lang, how) => model === 'eleven_v3' ? { stability: 0.5 } : { ...SETTINGS, ...LANG_SETTINGS[lang], speed: SPEED[lang], ...(how && how.set) };   // how.set: a line's own settings (app/voice-ru.js)
 // style 0: with more "style" the models act the line out, and a breath or a sigh is part of the act
 const SETTINGS = { stability: 0.6, similarity_boost: 0.8, style: 0, use_speaker_boost: true };
-const SPEED = { ru: 0.95, en: 0.85 };   // English a bit slower: the child is hearing new words
+const SPEED = { ru: 0.95, en: 0.85 };   // English a bit slower: the child is hearing new words; other languages: the model's own speed
 
 function apiKey() {
   if (process.env.ELEVENLABS_API_KEY) return process.env.ELEVENLABS_API_KEY;
@@ -77,23 +82,11 @@ function apiKey() {
   return m[1].trim().replace(/^"|"$/g, '');
 }
 
-// ---- every line the app can say, built from the app's own data module so the word lists never drift.
-// Keep in step with say(...) calls in web/js/*.js.
-function allLines({ SETS, LETTERS, CHUNKS, SHAPES, soundOf }) {
-  const ru = t => ['ru', t], en = t => ['en', t];
-  const lines = [];
-  const PRAISE = ['Браво!', 'Правильно!', 'Отлично!', 'Супер!'];
-  [ 'Найди', 'Перетащи картинку к её тени!', 'Что здесь лишнее? Нажми!', 'Каких букв не хватает?', 'Найди букву, которая говорит', 'С какого звука начинается слово?',
-    'Три подряд! Бонус!', 'Не спеши. Послушай ещё раз.', 'Посмотри, вот здесь!', 'Попробуй ещё!', 'Без единой ошибки! Золотая звезда!', 'Урок пройден!',
-    'Можно купить стикер!', 'Обведи буквы', 'в слове', 'Обведи букву', 'Обведи!', 'Собери картинку!', 'Запомни!', 'Найди парочки!', 'Жми на кнопку, чтобы ехать быстрее!', 'Собирай монеты!', 'Финиш!', 'Первое место!',
-    'Собери шарики одного цвета в ряд!', 'Поставь шарики по порядку, чтобы получилось слово!', 'Нажми на шарик!', 'А теперь — куда его поставить!',
-    'И новый альбом!', 'Ещё немного монет! Пойдём играть?', 'Весь набор собран!', 'Тебе кубок!', 'Привет!', 'Кто играет?', 'Привет! Это проверка.', 'Монетки тебе в подарок!', ...PRAISE,
-  ].forEach(t => lines.push(ru(t)));
-  // the grown-up's name in every form the settings offer
-  const PARENTS = [['маму', 'маме'], ['папу', 'папе'], ['бабушку', 'бабушке'], ['дедушку', 'дедушке'], ['маму или папу', 'маме или папе']];
-  PARENTS.forEach(([acc, dat]) => {
-    lines.push(ru(`Покажи ${dat}!`), ru(`Стикеры спят. Позови ${acc}, чтобы поиграть ещё.`), ru(`Это для взрослых. Позови ${acc}!`), ru(`Позови ${acc}! Покажи ${dat}!`));
-  });
+// ---- every line the app can say. The lines of the instructions come from the table of web/js/phrases.js (every
+// language, every form of the grown-up); the English words from the app's data module, so the word lists never drift.
+function allLines({ SETS, LETTERS, CHUNKS, SHAPES, soundOf }, phrases) {
+  const en = t => ['en', t];
+  const lines = phrases.allPhrases();
   // English: words, sticker names, set names, letters, sounds and the lesson sentences built from them
   const words = new Set();
   SETS.forEach(s => { lines.push(en(s.name), en(s.name + '!')); s.items.forEach(([, w]) => words.add(w)); });
@@ -211,12 +204,15 @@ async function tts(lang, text) {
 }
 (async () => {
   const data = await import(pathToFileURL(path.join(WEB, 'js', 'data.js')).href);
-  const uniq = [...new Map(allLines(data).map(l => [key(l), l])).values()];
+  const phrases = await import(pathToFileURL(path.join(WEB, 'js', 'phrases.js')).href);
+  const uniq = [...new Map(allLines(data, phrases).map(l => [key(l), l])).values()];
   fs.mkdirSync(OUT, { recursive: true });
   // --redo: the lines listed in the file, re-rendered even if their clip exists (a line not in the list is reported)
   const redo = REDO ? new Set(fs.readFileSync(REDO, 'utf8').split(/\r?\n/).filter(s => s.trim()).map(s => { const [lang, text] = s.split('\t'); return lang.trim() + '|' + text; })) : null;
   if (redo) [...redo].filter(k => !uniq.some(l => key(l) === k)).forEach(k => console.log('not in the list, skipped:', k));
-  const todo = uniq.filter(l => (!ONLY_LANG || l[0] === ONLY_LANG) && (redo ? redo.has(key(l)) : FORCE || !fs.existsSync(path.join(OUT, file(key(l))))));
+  const voiceless = [...new Set(uniq.map(l => l[0]))].filter(l => !VOICES[l]);
+  voiceless.forEach(l => console.log(`no voice for "${l}" in VOICES: its ${uniq.filter(x => x[0] === l).length} lines are read by the device's voice`));
+  const todo = uniq.filter(l => VOICES[l[0]] && (!ONLY_LANG || l[0] === ONLY_LANG) && (redo ? redo.has(key(l)) : FORCE || !fs.existsSync(path.join(OUT, file(key(l))))));
   console.log(`${uniq.length} lines, ${todo.length} to render`);
   uniq.filter(l => l[0] === 'ru' && !howOf(...l)).forEach(l => console.log('no stresses and tone in app/voice-ru.js:', l[1]));
   if (LIST) { todo.forEach(([lang, text]) => console.log(lang, text)); writeManifest(uniq); return; }

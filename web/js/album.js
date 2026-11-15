@@ -3,13 +3,13 @@
 import { Cloud } from './cloud.js';
 import { $, frame, pt, rectIn, capture } from './stage.js';
 import { U } from './session.js';
-import { S, save, sceneOpen, timeUp, parentAcc, parentDat } from './state.js';
+import { S, save, sceneOpen, timeUp } from './state.js';
 import { stickerLocked } from './premium.js';
 import { openParent } from './parent.js';
 import { SCENES, SETS, STICKERS, STICKER_FX, MAX_MOVING, pic, iconOf } from './data.js';
 import { BG } from './gen/art.js';
 import { I } from './icons.js';
-import { say, ru, en, sfx, sayThenSound } from './audio.js';
+import { say, ph, en, sfx, sayThenSound } from './audio.js';
 import { overlay, closeOverlay, confetti, renderCoins } from './ui.js';
 import { go, onEnter, onLeave } from './nav.js';
 
@@ -43,7 +43,7 @@ export function checkSetComplete(setId) {
   S.rewarded.push(setId);
   save();
   setTimeout(() => {
-    confetti(); say(ru('Весь набор собран!'), en(set.name + '!'), ru('Тебе кубок!'), ru('Покажи ' + parentDat() + '!'));
+    confetti(); say(ph('setDone'), en(set.name + '!'), ph('cup'), ph('showParent'));
     overlay(`<div class="bigpic">${iconOf(set)}${I.trophy}</div><div class="gain">${set.name}: 12/12</div>
       <div class="row"><button class="btn to-stick" id="tostick">${I.stick} Stick</button><button class="btn gray" id="cl">${I.close}</button></div>`);
     // already in this album: the button just closes the window
@@ -90,7 +90,7 @@ function renderAlbum() {
   hideTools();
   renderShelf();
   $('shelf').scrollLeft = 0;
-  if (timeUp()) { say(ru('Стикеры спят. Позови ' + parentAcc() + ', чтобы поиграть ещё.')); return; }
+  if (timeUp()) { say(ph('sleep')); return; }
   hopAffordable();
   if (!S.stickHint) handHint();
 }
@@ -241,7 +241,7 @@ function buyDrop(k, q) {
   flyCoins(el);
   sfx.snap(); limitMotion();
   // only the sticker's name is said: no "Ура! Новый стикер!" (2026-11-15)
-  say(en(st.w), ...(got.newPage ? [ru('И новый альбом!'), en(set.name)] : []));
+  say(en(st.w), ...(got.newPage ? [ph('newAlbum'), en(set.name)] : []));
   if (got.first) confetti();
   // the first sticker opens the album: the page and its tab light up
   $('album').classList.remove('closed');
@@ -327,7 +327,7 @@ function notEnough() {
   if (!trial) return;
   const at = { ...trial.el._it };
   cancelTrial();
-  say(ru('Ещё немного монет! Пойдём играть?'));
+  say(ph('moreCoins'));
   const b = document.createElement('button');
   b.className = 'btn to-play playhint'; b.innerHTML = `${I.play} Play`;
   b.style.left = at.x + 'px'; b.style.top = at.y + 'px';

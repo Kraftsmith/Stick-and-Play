@@ -5,7 +5,7 @@ import { S, save } from './state.js';
 import { PZ_LEVELS, PZ_COLORS, WORD_INFO, ECON } from './data.js';
 import { I } from './icons.js';
 import { one, shuffle } from './util.js';
-import { say, en, cheer, sfx } from './audio.js';
+import { say, ph, en, cheer, sfx } from './audio.js';
 import { confetti, addCoins, IMGS } from './ui.js';
 import { go } from './nav.js';
 import { L, later, nextTask, dotsHtml, onTask } from './lessons.js';
@@ -65,7 +65,7 @@ function startPuzzle(task) {
     host.appendChild(p);
     dragPiece(p, Math.min(cw, ch));
   });
-  say('Собери картинку!');
+  say(ph('puzzle'));
 }
 function dragPiece(p, cell) {
   let off = null;
@@ -104,7 +104,7 @@ function puzzleDone() {
   const gain = ECON.puzzle[Math.min(PZ.level, 3) - 1];
   S.stats.puzzles++; S.stats.tasks++; save();
   L.earned += gain;
-  confetti(); sfx.ok(); say(cheer('Супер!'), en(PZ.word + '!'));
+  confetti(); sfx.ok(); say(cheer('super'), en(PZ.word + '!'));
   const b = rectIn($('board'));
   $('board').animate([{ transform: 'scale(1)' }, { transform: 'scale(1.06) rotate(-2deg)' }, { transform: 'scale(1)' }], { duration: 600 });
   $('pname').textContent = PZ.word; $('pname').classList.add('on');

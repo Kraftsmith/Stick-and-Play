@@ -4,22 +4,32 @@ import { U, LESSON_SCREENS } from './session.js';
 import { $ } from './stage.js';
 import { VOICE } from './gen/voice.js';
 import { SFX } from './gen/sfx.js';
-import { sfxFile, isSound, PRAISE } from './data.js';
+import { sfxFile, isSound } from './data.js';
+import { phrase, PRAISE } from './phrases.js';
 import { NTTS } from './platform.js';
 import { ICON_SND, ICON_MUTE } from './icons.js';
 
-/* ---- voice: instructions in Russian, English words in English ---- */
-export const ru = t => [t, 'ru'], en = t => [t, 'en'], cheer = t => [t, 'ru', 1];
+/* ---- voice: instructions in the child's language (phrases.js), English words in English ----
+   A part of a phrase is [text, lang, kind]: kind 'i' is an instruction or a hint (silent when the spoken hints are off),
+   'c' praise (always said); English words have none. */
+export const en = t => [t, 'en'];
+const part = kind => id => {
+  const p = phrase(id, S.lang, { who: S.parentWho, call: S.parentAcc, show: S.parentDat });
+  return p ? [p[0], p[1], kind] : null;
+};
+export const ph = part('i'), cheer = part('c');
+// the language of a device voice for each language of the instructions
+const TAGS = { en: 'en-US', ru: 'ru-RU', uk: 'uk-UA', de: 'de-DE', fr: 'fr-FR', es: 'es-ES' };
+export const tagOf = lang => TAGS[lang] || lang;
 let voices = {};
 function loadVoices() {
   const v = speechSynthesis.getVoices();
-  voices.ru = v.find(x => x.lang.startsWith('ru'));
-  voices.en = v.find(x => x.lang === 'en-US') || v.find(x => x.lang.startsWith('en'));
+  Object.entries(TAGS).forEach(([l, tag]) => { voices[l] = v.find(x => x.lang.replace('_', '-') === tag) || v.find(x => x.lang.startsWith(l)); });
 }
 try { loadVoices(); speechSynthesis.addEventListener('voiceschanged', loadVoices); } catch (e) {}
 let sayGen = 0;
 export const ttsState = { log: '' };   // the last native TTS error, shown in the parent zone
-const clipOf = p => { const [text, lang] = typeof p === 'string' ? [p, 'ru'] : p; const f = VOICE[lang + '|' + text]; return f ? 'audio/voice/' + f + '.mp3' : null; };
+const clipOf = p => { const [text, lang] = p; const f = VOICE[lang + '|' + text]; return f ? 'audio/voice/' + f + '.mp3' : null; };
 let clipAudio = null;
 // The clips of a phrase are fetched ahead (2026-11-14, Specs/features/sounds.md 6): a phrase is several clips played one
 // after another, and a clip that started loading only when its turn came left a pause of its own length between the
@@ -34,7 +44,7 @@ function clipEl(src) {
   return a;
 }
 // start loading the clips of these parts: called when a task's phrase is built, before it is said
-export function warm(...parts) { parts.forEach(p => { const src = clipOf(p); if (src) clipEl(src); }); }
+export function warm(...parts) { parts.forEach(p => { const src = p && clipOf(p); if (src) clipEl(src); }); }
 function playClip(src) {
   return new Promise(res => {
     if (clipAudio) { clipAudio.pause(); clipAudio = null; }
@@ -60,8 +70,8 @@ export function hearLine(lang, text, how) {
 }
 export const hasClip = (lang, text) => !!clipOf([text, lang]);
 // the device voices the app would use when a line has no clip (browser only; the native app uses the system TTS)
-export const deviceVoices = () => NTTS ? { ru: 'system TTS (ru-RU)', en: 'system TTS (en-US)' }
-  : { ru: voices.ru ? voices.ru.name + ' · ' + voices.ru.lang : 'none: Russian is read by the default voice', en: voices.en ? voices.en.name + ' · ' + voices.en.lang : 'none' };
+export const deviceVoices = () => Object.fromEntries(Object.keys(TAGS).map(l => [l, NTTS ? `system TTS (${tagOf(l)})`
+  : voices[l] ? voices[l].name + ' · ' + voices[l].lang : 'none: read by the default voice']));
 export function stopVoice() {
   sayGen++; stopFx(); duck(false);
   if (clipAudio) { clipAudio.pause(); clipAudio = null; }
@@ -69,9 +79,9 @@ export function stopVoice() {
 }
 // TTS for a single part (browser or native); resolves when it ends
 function speakPart(p) {
-  const [text, lang] = typeof p === 'string' ? [p, 'ru'] : p;
+  const [text, lang] = p;
   if (NTTS) {
-    const o = { text, lang: lang === 'en' ? 'en-US' : 'ru-RU', rate: lang === 'en' ? 0.8 : 0.95, pitch: 1.15, volume: S.voiceVol / 100, queueStrategy: 1 };
+    const o = { text, lang: tagOf(lang), rate: lang === 'en' ? 0.8 : 0.95, pitch: 1.15, volume: S.voiceVol / 100, queueStrategy: 1 };
     return NTTS.speak(o).catch(e => {
       ttsState.log = (e && e.message) || String(e);
       if (/initialized/i.test(ttsState.log)) return new Promise(r => setTimeout(r, 600)).then(() => NTTS.speak(o)).catch(() => {});
@@ -80,7 +90,7 @@ function speakPart(p) {
   return new Promise(res => {
     try {
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = lang === 'en' ? 'en-US' : 'ru-RU'; u.rate = lang === 'en' ? 0.8 : 0.95; u.pitch = 1.15; u.volume = S.voiceVol / 100;
+      u.lang = tagOf(lang); u.rate = lang === 'en' ? 0.8 : 0.95; u.pitch = 1.15; u.volume = S.voiceVol / 100;
       if (voices[lang]) u.voice = voices[lang];
       u.onend = u.onerror = () => res(); speechSynthesis.speak(u);
     } catch (e) { res(); }
@@ -88,7 +98,8 @@ function speakPart(p) {
 }
 export function say(...parts) {
   if (S.mute || !S.voiceVol) return;
-  if (!S.hints && LESSON_SCREENS.includes(U.current)) parts = parts.filter(p => typeof p !== 'string' && (p[1] !== 'ru' || p[2]));
+  parts = parts.filter(Boolean);   // a line no language has
+  if (!S.hints && LESSON_SCREENS.includes(U.current)) parts = parts.filter(p => p[2] !== 'i');
   if (!parts.length) return;
   stopVoice();
   const gen = sayGen;
@@ -101,7 +112,7 @@ export function say(...parts) {
     if (gen !== sayGen) return;
     const src = clipOf(p);
     // a letter's sound has no fallback: the device's voice would read "/s/" as the letter's name (phonics.md, rule 1)
-    if (!src && typeof p !== 'string' && isSound(p[0])) return;
+    if (!src && isSound(p[0])) return;
     return src ? playClip(src) : speakPart(p);
   }), hold > 0 ? new Promise(r => setTimeout(r, hold)) : Promise.resolve()).then(() => { if (gen === sayGen) duck(false); return gen === sayGen; });
 }
@@ -333,7 +344,7 @@ $('mute').onclick = ev => {
 };
 renderMute();
 // browsers allow sound only after the first touch; the praise is said after every right answer, so it is fetched at once
-addEventListener('pointerdown', () => { music.start(); warm(...PRAISE.map(t => [t, 'ru']), ['Попробуй ещё!', 'ru'], ['Три подряд! Бонус!', 'ru']); }, { once: true });
+addEventListener('pointerdown', () => { music.start(); warm(...PRAISE.map(cheer), ph('tryAgain'), cheer('streak')); }, { once: true });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { music.stop(); try { actx && actx.suspend(); } catch (e) {} }
   else { try { actx && actx.resume(); } catch (e) {} music.start(); }
