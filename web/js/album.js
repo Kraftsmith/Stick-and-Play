@@ -1,7 +1,7 @@
 // The album: one page per set; its shelf holds the whole set. A sticker dragged from the shelf to the page is bought
 // right there; on the page it is moved, scaled, rotated, flipped, or given back for half its price (features/stick.md).
 import { Cloud } from './cloud.js';
-import { $, frame, pt, rectIn, capture } from './stage.js';
+import { $, frame, pt, rectIn, capture, bleed } from './stage.js';
 import { U } from './session.js';
 import { S, save, sceneOpen, timeUp } from './state.js';
 import { stickerLocked } from './premium.js';
@@ -86,6 +86,7 @@ function renderAlbum() {
   const art = BG.includes(U.sceneId);
   sc.classList.toggle('art', art); sc.style.backgroundImage = art ? `url("img/bg/${U.sceneId}.jpg")` : '';
   if (!art) SCENES.find(s => s.id === U.sceneId).deco.forEach(([e, x, y, f]) => page.innerHTML += `<div class="deco" style="left:${x}px;top:${y}px;font-size:${f}px">${e}</div>`);
+  pullIn();
   sceneData().forEach(it => page.appendChild(placedEl(it)));
   limitMotion();
   hideTools();
@@ -202,7 +203,7 @@ function dragFromShelf(t) {
     if (ghost) { ghost.remove(); ghost = null; }
     if (wasScroll) return;
     if (!wasDrag) { nameSticker(k); return; }
-    if (!(q.y < 600 && q.y > 0 && q.x > 0 && q.x < 1280)) return;
+    if (!onPage(q)) return;
     if (S.inv[k] > 0) placeFromShelf(k, q);
     else if (!stickerLocked(STICKERS[k].set) && S.coins >= STICKERS[k].price) buyDrop(k, q);
     else startTrial(k, q);
@@ -224,8 +225,23 @@ function placeFromShelf(k, q) {
   sfx.snap(); renderShelf(); limitMotion(); showLabel(el);
 }
 
+/* ---- where a sticker may lie ---- */
+// The picture runs out to the window's edges (stage.js: --bx / --by beyond the 1280×800 frame), so a sticker may lie
+// anywhere on it, not only inside the frame: on a wide phone the strips at the sides are page too (bug of 2026-11-16).
+// All in frame px; x may be negative or above 1280 on a wide window.
+const L = () => -bleed.x, R = () => 1280 + bleed.x, T = () => -bleed.y;
+const onPage = q => q.y < 600 && q.y > T() && q.x > L() && q.x < R();            // a drop from the shelf lands on the page
+const inPage = (x, y, bottom) => [Math.max(L(), Math.min(R(), x)), Math.max(T(), Math.min(bottom, y))];   // a dragged sticker stays on it
+// a sticker that lies beyond this window's edges (stuck there on a wider screen) is pulled to the edge, so it is never lost
+function pullIn() {
+  let moved = false;
+  sceneData().forEach(it => { const [x, y] = inPage(it.x, it.y, 620); if (x !== it.x || y !== it.y) { it.x = x; it.y = y; moved = true; } });
+  if (moved) save();
+}
+
 /* ---- buying by dragging (features/stick.md 5) ---- */
-const clampX = x => Math.max(70, Math.min(1210, x)), clampY = y => Math.max(70, Math.min(500, y));
+// a bought or tried-on sticker lands a little in from the edge
+const clampX = x => Math.max(L() + 70, Math.min(R() - 70, x)), clampY = y => Math.max(T() + 70, Math.min(500, y));
 // A sticker the coins are enough for, dropped on the page: the coins are spent at once and it is stuck where it fell.
 // No button and no question; a sticker bought by mistake is given back for half the price (removePlaced).
 function buyDrop(k, q) {
@@ -298,7 +314,7 @@ function dragTrial(el) {
     const q = pt(ev);
     if (Math.hypot(q.x - startQ.x, q.y - startQ.y) > 8) moved = true;
     if (!moved) return;
-    el._it.x = Math.max(0, Math.min(1280, q.x - off.x)); el._it.y = Math.max(0, Math.min(800, q.y - off.y));
+    [el._it.x, el._it.y] = inPage(q.x - off.x, q.y - off.y, 800);
     applyT(el); placeUi();
   });
   const up = () => {
@@ -391,7 +407,7 @@ function dragPlaced(el) {
     }
     if (!off) return;
     if (Math.hypot(q.x - startQ.x, q.y - startQ.y) > 8) moved = true;
-    el._it.x = Math.max(0, Math.min(1280, q.x - off.x)); el._it.y = Math.max(0, Math.min(620, q.y - off.y));
+    [el._it.x, el._it.y] = inPage(q.x - off.x, q.y - off.y, 620);
     $('shelf').classList.toggle('hot', moved && overShelf(q));   // the shelf lights up: let go and the sticker goes back
     applyT(el);
   });
@@ -424,9 +440,9 @@ function select(el) {
   else if (r.y + r.h + GAP + H <= BOTTOM) y = r.y + r.h + GAP;
   else {
     y = r.y + r.h / 2 - H / 2;
-    x = r.x + r.w + GAP + W <= 1270 ? r.x + r.w + GAP : r.x - GAP - W;
+    x = r.x + r.w + GAP + W <= R() - 10 ? r.x + r.w + GAP : r.x - GAP - W;
   }
-  t.style.left = Math.max(10, Math.min(1270 - W, x)) + 'px';
+  t.style.left = Math.max(L() + 10, Math.min(R() - 10 - W, x)) + 'px';
   t.style.top = Math.max(TOP, Math.min(BOTTOM - H, y)) + 'px';
 }
 function hideTools() { $('tools').classList.remove('on'); document.querySelectorAll('.placed.sel').forEach(e => e.classList.remove('sel')); selected = null; }

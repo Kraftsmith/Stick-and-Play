@@ -5,6 +5,8 @@
 export const $ = id => document.getElementById(id);
 export const stage = $('stage'), frame = $('frame');
 export let scale = 1;
+// how far the window reaches beyond the frame on each side, in frame px (the same as --bx / --by below)
+export const bleed = { x: 0, y: 0 };
 
 const px = v => parseFloat(v) || 0;
 // The window's safe area (a notch, a camera hole, the home indicator) in CSS px: env() where the browser knows it
@@ -24,6 +26,7 @@ export function fit() {
   scale = Math.min(innerWidth / 1280, innerHeight / 800);
   const W = innerWidth / scale, H = innerHeight / scale, bx = (W - 1280) / 2, by = (H - 800) / 2, s = safeArea();
   stage.style.width = W + 'px'; stage.style.height = H + 'px'; stage.style.transform = `scale(${scale})`;
+  bleed.x = bx; bleed.y = by;
   const v = { bx, by, sl: s.left / scale, sr: s.right / scale, st: s.top / scale, sb: s.bottom / scale };
   v.el = Math.min(0, v.sl - bx); v.er = Math.min(0, v.sr - bx);
   for (const k in v) stage.style.setProperty('--' + k, v[k].toFixed(2) + 'px');
