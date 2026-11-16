@@ -382,6 +382,7 @@ h3 { font-size: 21px; line-height: 1.25; font-weight: 800; }
 .foot nav { display: flex; gap: 20px; margin-right: auto; }
 .foot a { color: inherit; }
 .foot .logo { font-size: 19px; }
+.foot .made { flex-basis: 100%; margin: 0; font-size: 14px; opacity: .75; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
