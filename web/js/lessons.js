@@ -4,7 +4,7 @@ import { U } from './session.js';
 import { S, save, isDone, wordsOf, learnedWords, learnedLetters, learnedChunks } from './state.js';
 import { TRACKS, THEMES, LETTERS, letterSound, CHUNKS, CHUNK_WORD, WORD_INFO, SETS, STICKERS, ECON, pic, picOf, markWord, sndOf } from './data.js';
 const letterWords = lis => lis.flatMap(li => LETTERS[li][1].map(x => x[0]));
-import { I, ICON_NEXT } from './icons.js';
+import { I } from './icons.js';
 import { one, shuffle } from './util.js';
 import { say, en, cheer, sfx } from './audio.js';
 import { overlay, closeOverlay, addCoins, confetti } from './ui.js';
@@ -173,11 +173,13 @@ export function endLesson() {
   setTimeout(() => {
     if (L !== me) return;
     const canBuy = S.coins >= CHEAPEST && SETS.some(s => affordableIn(s.id)), hasNext = L.idx + 1 < TRACKS[L.tr].lessons.length;
+    // +earned, then the whole balance (like the counter in the top bar, which the overlay hides): is it enough yet?
     overlay(`<div class="bigpic">${gold ? I.gold : I.star}</div><div class="gain">+${L.earned} ${I.coin}</div>
-      ${canBuy ? '<div class="hintbuy">You can buy a sticker! ➜</div>' : ''}
+      <div class="total" title="Coins"><span class="c">${I.coin}</span>${S.coins}</div>
+      ${canBuy ? '<div class="hintbuy">You can buy a sticker!</div>' : ''}
       <div class="row endrow">
         ${canBuy ? `<button class="btn to-stick" id="tostick">${I.stick} Stick</button>` : ''}
-        <button class="btn green" id="nextl" title="Next">${ICON_NEXT}</button>
+        <button class="btn to-play" id="nextl">${I.play} Play</button>
       </div>`);
     // only two choices: a sticker in the album, or the next lesson (the path, after the last one)
     $('nextl').onclick = () => { closeOverlay(); if (hasNext) startLesson(L.tr, L.idx + 1); else go('path'); };

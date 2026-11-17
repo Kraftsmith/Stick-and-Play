@@ -89,9 +89,7 @@
 .endrow .btn { min-width: 200px; min-height: 130px; border-radius: 36px; display: flex; align-items: center; justify-content: center; gap: 14px; padding: 0 30px; }
 .endrow .btn .ic { width: 64px; height: 64px; }
 .endrow .btn svg { display: block; filter: drop-shadow(0 3px 0 rgba(0,0,0,.15)); }
-.endrow .btn.green { background: linear-gradient(#7fd88f, #4fb866); box-shadow: 0 8px 0 #2f8a48; }
-.endrow .btn.green svg { animation: nudge 1.8s ease-in-out infinite; }
-@keyframes nudge { 0%, 70%, 100% { transform: translateX(0); } 82% { transform: translateX(8px); } }
+.endrow .btn { font-size: 40px; }
 
 /* trace a letter */
 #trace { background: #fff6ec; }
