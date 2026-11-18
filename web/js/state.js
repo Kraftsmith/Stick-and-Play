@@ -3,6 +3,7 @@ import { STICKERS, SETS, ECON, TRACKS, LEVELS, THEMES, THEME_ORDER, LETTERS, CHU
 import { PRAISE } from './phrases.js';
 import { one } from './util.js';
 import { Profiles } from './profiles.js';
+import { starsOf } from './doc.js';
 
 /* ================= state ================= */
 // a new game; a profile's saved game is laid over it
@@ -15,7 +16,7 @@ const fresh = () => ({
   rewarded: [],   // set ids whose completion reward was given
   stats: { tasks:0, correct:0, wrong:0, puzzles:0, pairs:0, lines:0, linesWords:0, races:0, raceWins:0, words:{}, letters:{} },
   limit: 0, day: '', usedMs: 0,   // daily limit in minutes, 0 = none; only a parent sets it
-  prog: null,     // track -> { lessonIdx: 'ok' | 'gold' }
+  prog: null,     // track -> { lessonIdx: stars 1..3 } (older saves: 'ok' | 'gold', read with starsOf)
   lastTrack: null,
   stickHint: false, // the hand on the album shelf was shown (features/stick.md 3)
   lastScene: null,  // the album the child opened last: Stick on the home screen opens it (features/stick.md 3)
@@ -143,6 +144,9 @@ export function resetAll() { Profiles.wipe(); location.reload(); }
 
 /* ================= progress ================= */
 export const isDone = (tr, i) => !!S.prog[tr][i];
+export { starsOf };
+// the stars a lesson earns (SPEC 3.1): 0 or 1 mistake -> 3, 2-3 -> 2, more -> 1. A game has no mistakes: 3.
+export const starsFor = misses => (misses <= 1 ? 3 : misses <= 3 ? 2 : 1);
 export function nextIdx(tr) { const n = TRACKS[tr].lessons.length; for (let i = 0; i < n; i++) if (!isDone(tr, i)) return i; return n; }
 export const doneCount = tr => Object.keys(S.prog[tr]).length;
 export const wordsOf = ls => THEMES[ls.theme].slice(ls.part * 4, ls.part * 4 + 4).map(x => x[0]);

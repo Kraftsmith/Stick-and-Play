@@ -261,10 +261,9 @@ export const ECON = {
   start: 20,          // exactly one common sticker: the first purchase opens the first album
   task: 2,            // correct answer
   firstTry: 1,        // + if no mistakes in this task
-  streak: 2,          // + every 3 correct in a row
   puzzle: [4, 4, 5],  // by puzzle level 1..3
   pairs: [4, 4, 5],   // memory game finished, by level 1..3
-  race: { max: [5, 5, 6], min: 3 },   // one per coin picked up on the road, by level 1..3; never fewer than min at the finish
+  race: { max: [17, 17, 21], min: 3 },   // one per coin picked up on the road (gates + the trails after them), by level 1..3; never fewer than min at the finish
   lines: [4, 4, 5],   // lines game finished, by level 1..3
   lessonFirst: 5,     // + first time a lesson is finished
   daily: 5,           // first visit of the day

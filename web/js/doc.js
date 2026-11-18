@@ -8,6 +8,10 @@
 
 export const SCHEMA = 2;   // the format this app reads and writes. 2: prog.abc, the letters path (2026-11-13)
 
+// a lesson's mark in prog: the number of stars, 1..3 (since 2026-11-18). Older saves and documents have 'gold' (no mistakes,
+// now 3 stars) and 'ok' (done with mistakes, now 2); anything else that is set means done. 0: not done.
+export const starsOf = v => (typeof v === 'number' ? (v > 0 ? Math.min(3, Math.ceil(v)) : 0) : v === 'gold' ? 3 : v ? 2 : 0);
+
 const obj = v => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
 const arr = v => (Array.isArray(v) ? v : []);
 const num = (v, d = 0) => (typeof v === 'number' && isFinite(v) ? v : d);
@@ -104,11 +108,11 @@ export function mergeDoc(a, b) {
   const [late, early] = num(a.at) >= num(b.at) ? [a.doc, b.doc] : [b.doc, a.doc];
   const L = copy(obj(late)), E = copy(obj(early));
   const maxMap = (x, y) => { const out = Object.assign({}, obj(y)); Object.entries(obj(x)).forEach(([k, n]) => { out[k] = Math.max(num(n), num(out[k])); }); return out; };
-  // lessons: done on either device is done; gold beats ok
+  // lessons: done on either device is done; the more stars win
   const prog = {};
   ['main', 'abc', 'lvl2'].forEach(tr => {
     const x = obj(obj(L.prog)[tr]), y = obj(obj(E.prog)[tr]); prog[tr] = Object.assign({}, y, x);
-    Object.keys(prog[tr]).forEach(i => { if (x[i] === 'gold' || y[i] === 'gold') prog[tr][i] = 'gold'; });
+    Object.keys(prog[tr]).forEach(i => { prog[tr][i] = Math.max(starsOf(x[i]), starsOf(y[i])); });
   });
   // counters: the larger one (both grew from the same base, a sum would double them)
   const ls = obj(L.stats), es = obj(E.stats), stats = {};

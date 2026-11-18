@@ -19,7 +19,6 @@ export function showQ(task) {
   if (U.current !== 'quiz') return;
   Q = { task, miss: 0, locked: false, wrongAt: [], drag: false };
   $('dots').innerHTML = dotsHtml();
-  $('streak').innerHTML = U.streak > 0 ? I.fire.repeat(Math.min(U.streak % 3 || 3, 3)) : '';
   const P = $('prompt'), spk = `<button class="speak" id="spk">${I.speaker}</button>`;
   let opts, phrase;
   if (task.t === 'pick' || task.t === 'pair') {
@@ -114,14 +113,12 @@ export function answerQ(btn, ok) {
     Q.locked = true; btn.classList.add('ok'); sfx.ok();
     if (Q.fill) Q.fill();
     let gain = ECON.task + (Q.miss === 0 ? ECON.firstTry : 0);
-    U.streak++;
-    if (U.streak % 3 === 0) gain += ECON.streak;
     L.earned += gain;
     S.stats.tasks++; S.stats.correct++;
     const bucket = isLetter ? S.stats.letters : S.stats.words;
     bucket[Q.id] = (bucket[Q.id] || 0) + 1;
     const r = rectIn(btn); addCoins(gain, { x: r.x + r.w / 2 - 25, y: r.y + 40 });
-    say(...Q.after, cheer(U.streak % 3 === 0 ? 'streak' : praise()));
+    say(...Q.after, cheer(praise()));
     later(nextTask, 1900);
   } else {
     Q.miss++; L.misses++; S.stats.wrong++;

@@ -60,5 +60,25 @@
 .ln { width: 170px; height: 170px; font-size: 84px; border-width: 6px; }
 .conn { width: 84px; height: 18px; }
 .ln .mk { width: 62px; height: 62px; font-size: 42px; right: -12px; top: -14px; }
+/* a done circle's stars: a small arc on its lower rim, the middle one bigger and lower */
+.ln .lnstars { position: absolute; left: 50%; bottom: -26px; translate: -50% 0; gap: 0; font-size: 46px; }
+.ln .lnstars .s:nth-child(2) { font-size: 56px; translate: 0 8px; }
+.ln .lnstars .s.off svg { filter: grayscale(1) brightness(.95) opacity(.5); }
+/* a theme's finish (path.js): the last circle is bigger, sits in a chequered ring, and has a cup over it that lights up
+   when it is done; a dotted gap leads on to the next theme */
+.lwrap.fin { margin: 0 6px; }
+.lwrap.fin::before { content: ""; position: absolute; inset: -18px; border-radius: 50%;
+  background: repeating-conic-gradient(#7d6a58 0 15deg, #fffaf0 15deg 30deg); box-shadow: 0 8px 0 #b9a688, 0 0 0 5px #fffdf1; }
+.lwrap.fin.locked::before { opacity: .45; }
+.ln.fin { width: 200px; height: 200px; font-size: 98px; }
+/* the current finish hops without growing, so the ring stays in sight */
+.ln.fin.cur { animation-name: hopfin; }
+@keyframes hopfin { 0%, 75%, 100% { transform: none; } 87% { transform: translateY(-12px); } }
+.ln.fin .lnstars { bottom: -36px; }
+.lwrap.fin .cup { position: absolute; left: 50%; bottom: 100%; translate: -50% 0; margin-bottom: 24px; font-size: 84px; line-height: 0;
+  filter: grayscale(1) opacity(.45); pointer-events: none; }
+.lwrap.fin.done .cup { filter: drop-shadow(0 0 14px #ffd34d) drop-shadow(0 4px 0 #c99b4566); animation: float 3s ease-in-out infinite; }
+.conn.gap { width: 150px; height: 18px; box-shadow: none; background: radial-gradient(circle, #d4c5a9 6px, transparent 7px) 0 50% / 30px 18px repeat-x; }
+.conn.gap.done { background: radial-gradient(circle, #9cc595 6px, transparent 7px) 0 50% / 30px 18px repeat-x; }
 .ttag { margin-bottom: 44px; padding: 16px 26px 14px; min-width: 150px; font-size: 64px; }
 .ttag small { font-size: 28px; }

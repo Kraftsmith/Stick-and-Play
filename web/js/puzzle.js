@@ -3,7 +3,6 @@ import { $, pt, rectIn, capture } from './stage.js';
 import { U } from './session.js';
 import { S, save } from './state.js';
 import { PZ_LEVELS, PZ_COLORS, WORD_INFO, ECON } from './data.js';
-import { I } from './icons.js';
 import { one, shuffle } from './util.js';
 import { say, ph, en, cheer, sfx } from './audio.js';
 import { confetti, addCoins, IMGS } from './ui.js';
@@ -32,7 +31,6 @@ function startPuzzle(task) {
   const art = !task.e && WORD_INFO[word] && WORD_INFO[word].img;
   const img = puzzleImage(emoji, one(PZ_COLORS), art && IMGS[art]);
   PZ = { word, emoji, level: task.level, left: cols * rows };
-  $('lvl').innerHTML = I.star.repeat(task.level);
   $('pdots').innerHTML = dotsHtml();
   $('pname').classList.remove('on');
   const board = $('board'), tray = $('tray'), host = $('puzzle');

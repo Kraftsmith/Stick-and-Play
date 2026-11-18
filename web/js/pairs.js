@@ -20,7 +20,6 @@ function startPairs(task) {
   const words = [...new Set([...shuffle(task.words), ...shuffle(task.more)])].slice(0, cols * rows / 2);
   M = { level: task.level, left: words.length, open: [], lock: true, missRun: 0 };
   $('mspk').innerHTML = I.speaker;
-  $('mlvl').innerHTML = I.star.repeat(task.level);
   $('mdots').innerHTML = dotsHtml();
   const g = $('mgrid'), cw = Math.min(250, Math.floor((1040 - 24 * (cols - 1)) / cols), Math.floor((580 - 24 * (rows - 1)) / rows));
   g.style.setProperty('--cw', cw + 'px'); g.style.gridTemplateColumns = `repeat(${cols}, ${cw}px)`;

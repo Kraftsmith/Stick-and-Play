@@ -1,13 +1,13 @@
 // A lesson: its intro cards and task list, running the tasks one after another, the reward at the end.
 import { $ } from './stage.js';
 import { U } from './session.js';
-import { S, save, isDone, wordsOf, learnedWords, learnedLetters, learnedChunks } from './state.js';
+import { S, save, isDone, starsOf, starsFor, wordsOf, learnedWords, learnedLetters, learnedChunks } from './state.js';
 import { TRACKS, THEMES, LETTERS, letterSound, CHUNKS, CHUNK_WORD, WORD_INFO, SETS, STICKERS, ECON, pic, picOf, markWord, sndOf } from './data.js';
 const letterWords = lis => lis.flatMap(li => LETTERS[li][1].map(x => x[0]));
 import { I } from './icons.js';
 import { one, shuffle } from './util.js';
 import { say, en, cheer, sfx } from './audio.js';
-import { overlay, closeOverlay, addCoins, confetti } from './ui.js';
+import { overlay, closeOverlay, addCoins, confetti, starsHtml } from './ui.js';
 import { go } from './nav.js';
 import { lessonLocked, stickerLocked } from './premium.js';
 
@@ -127,7 +127,7 @@ export function startLesson(tr, idx) {
   // past the last lesson, or past the free plan (subscription.md 3): the path, where the lock is
   if (idx >= TRACKS[tr].lessons.length || lessonLocked(tr, idx)) { U.pathTr = tr; go('path'); return; }
   U.pathTr = tr; S.lastTrack = tr; save();
-  L = buildLesson(tr, idx); U.streak = 0;
+  L = buildLesson(tr, idx);
   if (L.intro.length) showIntro(L.intro, runTask); else runTask();
 }
 // the quiz, trace, puzzle, pairs, lines and race modules register how each task type starts
@@ -141,7 +141,7 @@ export function runTask() {
 export function nextTask() { L.i++; runTask(); }
 // testing: open a lesson at its first task of one type; extra changes that task (a variant not on any path yet)
 export function startAt(tr, idx, t, extra) {
-  closeOverlay(); U.pathTr = tr; L = buildLesson(tr, idx); U.streak = 0;
+  closeOverlay(); U.pathTr = tr; L = buildLesson(tr, idx);
   L.i = Math.max(0, L.tasks.findIndex(x => x.t === t));
   if (extra) Object.assign(L.tasks[L.i], extra);
   runTask();
@@ -162,28 +162,62 @@ function rewardAlbum(theme) {
 // the cheapest sticker there is: the coins needed for Stick on the reward screen
 const CHEAPEST = Math.min(...Object.values(STICKERS).map(st => st.price));
 export function endLesson() {
-  // a game circle has no wrong answers to count: an ordinary star, and no first-time bonus (its coins are the game's own)
-  const isGame = L.ls.kind === 'game', first = !isDone(L.tr, L.idx) && !isGame, gold = L.misses === 0 && !isGame;
-  S.prog[L.tr][L.idx] = gold || S.prog[L.tr][L.idx] === 'gold' ? 'gold' : 'ok';
+  // stars by the mistakes (starsFor); the circle keeps the best result. A game circle has no wrong answers: three stars,
+  // and no first-time bonus (its coins are the game's own)
+  const isGame = L.ls.kind === 'game', first = !isDone(L.tr, L.idx) && !isGame, stars = starsFor(L.misses);
+  S.prog[L.tr][L.idx] = Math.max(stars, starsOf(S.prog[L.tr][L.idx]));
   save();
   confetti(); sfx.ok();
-  say(cheer(gold ? 'gold' : 'lessonDone'));
+  say(cheer(stars === 3 ? 'stars3' : 'lessonDone'));
   if (first) { L.earned += ECON.lessonFirst; addCoins(ECON.lessonFirst, { x: 620, y: 360 }); }   // first-time lesson bonus
   const me = L;
   setTimeout(() => {
     if (L !== me) return;
     const canBuy = S.coins >= CHEAPEST && SETS.some(s => affordableIn(s.id)), hasNext = L.idx + 1 < TRACKS[L.tr].lessons.length;
-    // +earned, then the whole balance (like the counter in the top bar, which the overlay hides): is it enough yet?
-    overlay(`<div class="bigpic">${gold ? I.gold : I.star}</div><div class="gain">+${L.earned} ${I.coin}</div>
-      <div class="total" title="Coins"><span class="c">${I.coin}</span>${S.coins}</div>
-      ${canBuy ? '<div class="hintbuy">You can buy a sticker!</div>' : ''}
+    // one number, the whole balance (the top-bar counter, which the overlay hides). The lesson's coins are shown as an
+    // addition: "+N" drops into it and the number runs up to the new total, so the child sees them join what was saved.
+    // Stick shows up after that, when the total is enough for a sticker: no text, the voice says it.
+    const to = S.coins, from = Math.max(0, to - L.earned);
+    // the stars of this time (not the best one): they light up one by one, the dim ones are what a cleaner run gives
+    overlay(`${starsHtml(stars, 'endstars')}
+      <div class="total" id="total" title="Coins"><span class="c">${I.coin}</span><span id="totalN">${from}</span>
+        ${to > from ? `<span class="plus">+${to - from}</span>` : ''}</div>
       <div class="row endrow">
-        ${canBuy ? `<button class="btn to-stick" id="tostick">${I.stick} Stick</button>` : ''}
+        ${canBuy ? `<button class="btn to-stick later" id="tostick">${I.stick} Stick</button>` : ''}
         <button class="btn to-play" id="nextl">${I.play} Play</button>
       </div>`);
     // only two choices: a sticker in the album, or the next lesson (the path, after the last one)
     $('nextl').onclick = () => { closeOverlay(); if (hasNext) startLesson(L.tr, L.idx + 1); else go('path'); };
     const ts = $('tostick'); if (ts) ts.onclick = () => { U.sceneId = rewardAlbum(L.ls.theme); go('album'); };
-    if (canBuy) say(cheer('canBuy'));
+    for (let n = 0; n < stars; n++) setTimeout(() => { if (L === me) sfx.pop(); }, STAR_POP0 + n * STAR_STEP);
+    countUp($('totalN'), from, to, () => {
+      if (L !== me || !ts || !ts.isConnected) return;
+      // Play stays centred while the number runs; when Stick comes in, Play slides aside instead of jumping
+      const play = $('nextl'), x0 = play.offsetLeft;
+      ts.classList.remove('later'); ts.classList.add('appear');
+      play.animate([{ transform: `translateX(${x0 - play.offsetLeft}px)` }, { transform: 'none' }], { duration: 300, easing: 'ease-out' });
+      say(cheer('canBuy'));
+    });
   }, 1700);
+}
+// the reward screen's timing, the same as in css (.endstars .s.on, .total .plus): the stars light up one by one, then
+// "+N" drops into the balance and the balance runs from the old total to the new one
+const STAR_POP0 = 150, STAR_STEP = 220, PLUS_DROP = 1350, RUN = 900;
+function countUp(el, from, to, done) {
+  const box = el.closest('.total');
+  if (to <= from) { done(); return; }
+  setTimeout(() => {
+    if (!el.isConnected) return;
+    const t0 = performance.now(), ticks = Math.min(to - from, 8);
+    let shown = from, tick = 0;
+    const step = now => {
+      if (!el.isConnected) return;
+      const k = Math.min(1, (now - t0) / RUN), n = Math.round(from + (to - from) * (1 - (1 - k) ** 2));
+      if (n !== shown) { shown = n; el.textContent = n; }
+      if (tick < ticks && k >= tick / ticks) { tick++; sfx.coin(); }
+      if (k < 1) requestAnimationFrame(step);
+      else { box.classList.add('bump'); setTimeout(done, 350); }
+    };
+    requestAnimationFrame(step);
+  }, PLUS_DROP);
 }

@@ -3,7 +3,6 @@
 import { $, pt, rectIn, capture } from './stage.js';
 import { U } from './session.js';
 import { LETTERS, CHUNKS, SHAPES, sndOf, letterSound, picOf, emojiOf } from './data.js';
-import { I } from './icons.js';
 import { say, ph, en, sfx, warm } from './audio.js';
 import { go } from './nav.js';
 import { dotsHtml, onTask } from './lessons.js';
@@ -101,7 +100,6 @@ function startTrace(task) {
   T = { ch, W, H, px, k: shape ? (task.small ? .62 : 1) : px / 460, shape, pic: !!task.w, pts: [], zone: null, ink: 0, off: 0, last: null,
         hl: at >= 0 ? [at, at + CHUNKS[task.ci][0].length] : null };
   $('tdots').innerHTML = dotsHtml();
-  $('tstreak').innerHTML = U.streak > 0 ? I.fire.repeat(Math.min(U.streak % 3 || 3, 3)) : '';
   $('tcard').classList.remove('ok');
   drawGlyph($('tguide').getContext('2d'), ch, 'guide');
   // target points inside the glyphs, and the tolerance zone around them

@@ -23,13 +23,12 @@ export const PHRASES = {
   inWord:         { ru: 'в слове', de: 'im Wort', fr: 'dans le mot' },
   puzzle:         { ru: 'Собери картинку!', de: 'Setz das Bild zusammen!', fr: 'Assemble l’image !' },
   // after an answer
-  streak:         { ru: 'Три подряд! Бонус!', de: 'Dreimal richtig! Bonus!', fr: 'Trois d’affilée ! Bonus !' },
   slowDown:       { ru: 'Не спеши. Послушай ещё раз.', de: 'Nicht so schnell. Hör noch mal zu.', fr: 'Pas si vite. Écoute encore une fois.' },
   lookHere:       { ru: 'Посмотри, вот здесь!', de: 'Schau mal, hier!', fr: 'Regarde, c’est ici !' },
   tryAgain:       { ru: 'Попробуй ещё!', de: 'Versuch es noch mal!', fr: 'Essaie encore !' },
-  gold:           { ru: 'Без единой ошибки! Золотая звезда!', de: 'Kein einziger Fehler! Ein goldener Stern!', fr: 'Pas une seule erreur ! Une étoile d’or !' },
+  stars3:         { ru: 'Три звезды! Отлично!', de: 'Drei Sterne! Super!', fr: 'Trois étoiles ! Bravo !' },
   lessonDone:     { ru: 'Урок пройден!', de: 'Lektion geschafft!', fr: 'Leçon terminée !' },
-  canBuy:         { ru: 'Можно купить стикер!', de: 'Du kannst einen Sticker kaufen!', fr: 'Tu peux acheter un sticker !' },
+  canBuy:         { ru: 'Можно выбрать новый стикер!', de: 'Du kannst einen neuen Sticker aussuchen!', fr: 'Tu peux choisir un nouveau sticker !' },
   // praise: PRAISE, one at random (state.js praise())
   bravo:          { ru: 'Браво!', de: 'Bravo!', fr: 'Bravo !' },
   right:          { ru: 'Правильно!', de: 'Richtig!', fr: 'C’est ça !' },

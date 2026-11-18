@@ -39,7 +39,6 @@ html, body { margin: 0; height: 100%; background: #2b2540; overflow: hidden;
 .card .bigpic { font-size: 190px; line-height: 1.1; }
 .card .ename { font-size: 60px; font-weight: 800; color: #7d3fbf; margin-top: -6px; }
 .card .gain { font-size: 70px; font-weight: 800; color: #b5770b; margin: 6px 0 20px; }
-.card .hintbuy { font-size: 36px; font-weight: 800; color: #7d3fbf; margin-bottom: 20px; animation: bump 1s infinite; }
 .card .cnt { font-size: 40px; font-weight: 800; color: #3bb26b; margin-bottom: 16px; }
 .row { display: flex; gap: 24px; justify-content: center; }
 .btn { border: none; border-radius: 30px; padding: 20px 40px; font-family: inherit; font-size: 40px; font-weight: 800; color: #fff; cursor: pointer; }
@@ -96,15 +95,36 @@ button:active:not(:disabled):not(.locked) { translate: 0 4px; }
   box-shadow: 0 12px 0 #cfbc9a, 0 35px 80px #13202e4d; }
 .card .bigpic { font-size: 174px; filter: drop-shadow(0 8px 0 #c6a2571a); }
 .card .ename { color: #725187; font-size: 54px; }
-.card .gain { color: #91631c; font-size: 62px; margin-bottom: 10px; }
-/* the whole balance on the reward screen: the top-bar counter, repeated inside the card */
-.card .total { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 18px; padding: 6px 26px 6px 7px; border-radius: 999px;
-  border: 3px solid #fff6d5; background: linear-gradient(#fffef5, #fff0be); color: #805312; font-size: 40px; font-weight: 800;
-  font-variant-numeric: tabular-nums; box-shadow: 0 5px 0 #d7b96f; }
-.card .total .c { display: grid; place-items: center; width: 60px; height: 60px; font-size: 40px; border-radius: 50%;
+.card .gain { color: #91631c; font-size: 62px; }
+/* the reward screen: one balance; the lesson's coins drop into it as "+N" and the number runs up (lessons.js countUp) */
+/* three stars (ui.js starsHtml): the earned ones lit, the rest dim; on the card they light up one by one (lessons.js STAR_*) */
+.stars { display: inline-flex; align-items: flex-end; justify-content: center; pointer-events: none; }
+.stars .s { display: block; line-height: 0; }
+.stars .s svg { display: block; filter: drop-shadow(0 3px 0 #b8862033); }
+.stars .s.off svg { filter: grayscale(1) brightness(.95) opacity(.4); }
+.card .endstars { display: flex; gap: 6px; margin-top: 10px; font-size: 104px; }
+.card .endstars .s:nth-child(2) { font-size: 136px; translate: 0 -18px; }
+.card .endstars .s.on { animation: starpop .45s cubic-bezier(.3, 1.7, .6, 1) both; animation-delay: calc(.15s + var(--n) * .22s); }
+@keyframes starpop { from { transform: scale(0) rotate(-40deg); opacity: 0; } }
+.card .total { position: relative; display: inline-flex; align-items: center; gap: 14px; margin: 64px 0 30px; padding: 8px 32px 8px 8px;
+  border-radius: 999px; border: 3px solid #fff6d5; background: linear-gradient(#fffef5, #fff0be); color: #805312;
+  font-size: 56px; font-weight: 800; font-variant-numeric: tabular-nums; box-shadow: 0 6px 0 #d7b96f; }
+.card .total .c { display: grid; place-items: center; width: 76px; height: 76px; font-size: 50px; border-radius: 50%;
   background: linear-gradient(145deg, #ffe69b, #efb840); box-shadow: inset 0 0 0 3px #f8d477, inset 0 -3px 0 #ce941e; }
+.card .total .plus { position: absolute; left: 50%; bottom: 100%; color: #3f8f4f; font-size: 50px; white-space: nowrap; pointer-events: none;
+  opacity: 0; animation: plusdrop 1.1s ease-in .75s forwards; }
+@keyframes plusdrop {
+  0% { opacity: 0; transform: translate(-50%, 16px) scale(.6); }
+  25% { opacity: 1; transform: translate(-50%, -6px) scale(1.1); }
+  55% { opacity: 1; transform: translate(-50%, -6px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, 70px) scale(.5); } }
+.card .total.bump { animation: totalbump .35s ease-out; }
+@keyframes totalbump { 40% { transform: scale(1.12); } }
+/* Stick waits until the number has run up (Play is alone in the middle meanwhile), then pops in */
+.endrow .btn.later { display: none; }
+.endrow .btn.appear { animation: btnpop .45s cubic-bezier(.3, 1.6, .6, 1); }
+@keyframes btnpop { from { transform: scale(.4); opacity: 0; } }
 .card .cnt { color: #35765e; }
-.card .hintbuy { color: #725187; animation: float 5s ease-in-out infinite; }
 .btn { min-height: 84px; min-width: 84px; border: 3px solid #ffffff8c; border-radius: 28px; font-size: 34px; padding: 18px 30px; }
 .btn.orange { color: #673a20; background: linear-gradient(#ffd28c, #ffb16a); box-shadow: 0 6px 0 #c58847; }
 .btn.purple { background: linear-gradient(#9370ae, #76528f); box-shadow: 0 6px 0 #55376b; }

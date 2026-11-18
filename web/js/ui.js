@@ -38,6 +38,9 @@ export function confetti() {
     frame.appendChild(c); setTimeout(() => c.remove(), 2000);
   }
 }
+// a lesson's three stars (SPEC 3.1): the earned ones lit, the rest dim; `cls` sizes them (path circle, reward card)
+export const starsHtml = (n, cls) =>
+  `<span class="stars ${cls}" aria-label="${n} of 3 stars">${[0, 1, 2].map(i => `<span class="s ${i < n ? 'on' : 'off'}" style="--n:${i}">${I.star}</span>`).join('')}</span>`;
 export function overlay(html) { $('card').innerHTML = html; $('overlay').classList.add('on'); }
 export function closeOverlay() { $('overlay').classList.remove('on'); }
 

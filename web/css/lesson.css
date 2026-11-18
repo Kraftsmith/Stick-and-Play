@@ -6,7 +6,7 @@
 .tcard.wide { left: 100px; top: 150px; width: 870px; height: 480px; }
 .tcard.wide canvas { width: 870px; height: 480px; }
 #trace.wide .tspk { left: 1000px; top: 170px; }
-#trace.wide .tclear { left: 1000px; right: auto; top: 330px; }
+#trace.wide .tclear { left: 1000px; right: auto; top: 345px; }
 /* intro cards */
 #intro { background: #fff4f6; }
 .icard { position: absolute; left: 290px; top: 130px; width: 700px; height: 520px; background: #fff; border-radius: 48px;
@@ -40,7 +40,6 @@
 .dots { position: absolute; bottom: 36px; left: 0; right: 0; display: flex; justify-content: center; gap: 14px; }
 .dot { width: 22px; height: 22px; border-radius: 50%; background: #c6d9e8; }
 .dot.done { background: #ffb800; }
-.streak { position: absolute; top: 40px; left: 0; right: 0; text-align: center; font-size: 40px; pointer-events: none; }
 
 /* puzzle */
 #puzzle { background: #f1ecff; }
@@ -49,7 +48,6 @@
 .board .ghost { position: absolute; inset: 0; background-size: cover; opacity: .18; }
 .slot { position: absolute; border: 3px dashed #c7b8ef; }
 .tray { position: absolute; left: 760px; top: 150px; width: 440px; height: 560px; border-radius: 24px; background: rgba(255,255,255,.5); }
-.lvl { position: absolute; left: 120px; top: 100px; font-size: 30px; font-weight: 800; color: #7d6bb8; }
 .piece { position: absolute; border-radius: 6px; cursor: grab; box-shadow: 0 6px 14px rgba(60,30,120,.25); touch-action: none; }
 .piece.drag { cursor: grabbing; z-index: 40; box-shadow: 0 14px 28px rgba(60,30,120,.35); }
 .piece.snap { box-shadow: none; border-radius: 0; transition: left .15s, top .15s; }
@@ -62,7 +60,6 @@
 /* pairs: the memory game (Specs/features/pairs.md) */
 #pairs { background: radial-gradient(ellipse at 100% 0, #d9efe0, transparent 55%), radial-gradient(#8fb89a22 1.4px, transparent 1.8px), #f1f7ee; background-size: auto, 26px 26px, auto; }
 /* the speaker and the stars follow the Back button to the window's edge (--el, js/stage.js) */
-#pairs .lvl { left: calc(250px + var(--el)); top: 44px; }
 .mspk { position: absolute; left: calc(126px + var(--el)); top: 16px; width: 96px; height: 96px; font-size: 48px; }
 .pgrid { position: absolute; left: 0; right: 0; top: 136px; height: 580px; display: grid; justify-content: center; align-content: center; gap: 24px; }
 .mcard { position: relative; width: var(--cw); height: var(--cw); perspective: 900px; cursor: pointer; touch-action: none; -webkit-tap-highlight-color: transparent; }
@@ -85,7 +82,7 @@
 .choice.dragging { position: relative; z-index: 40; cursor: grabbing; box-shadow: 0 18px 30px rgba(30,60,90,.3); }
 .choice.ret { transition: transform .3s; }
 
-.endrow { gap: 40px; margin-top: 6px; }
+.endrow { gap: 40px; margin-top: 6px; min-width: 496px; }   /* room for Stick + Play: the card keeps its width when Stick comes in */
 .endrow .btn { min-width: 200px; min-height: 130px; border-radius: 36px; display: flex; align-items: center; justify-content: center; gap: 14px; padding: 0 30px; }
 .endrow .btn .ic { width: 64px; height: 64px; }
 .endrow .btn svg { display: block; filter: drop-shadow(0 3px 0 rgba(0,0,0,.15)); }
@@ -103,8 +100,13 @@
 .tpic .spic { width: 100%; height: 100%; object-fit: contain; }
 .tcard.pic.ok .tpic { opacity: .85; filter: none; }
 .tspk { position: absolute; left: 170px; top: 140px; }
-.tclear { position: absolute; right: 170px; top: 140px; width: 120px; height: 120px; border-radius: 50%; border: none;
-  background: #fff; box-shadow: 0 7px 0 #ddd0bd; font-size: 60px; color: #8a6d4a; cursor: pointer; }
+/* start again: the sound button's twin on the other side (same size, rim and shadow), pink, with a drawn eraser */
+.tclear { position: absolute; right: 170px; top: 140px; width: 150px; height: 150px; border-radius: 50%; cursor: pointer;
+  display: grid; place-items: center; padding: 0; font-size: 102px;
+  border: 4px solid #ffe8ee; background: linear-gradient(#ffd9e2, #f6aebf); box-shadow: 0 7px 0 #cf8297, 0 12px 25px #b0566e26; }
+.tclear svg { display: block; filter: drop-shadow(0 3px 0 #a0405a2e); }
+.tclear:active svg { animation: rub .35s ease-in-out; }
+@keyframes rub { 25% { transform: translateX(-7px) rotate(-6deg); } 75% { transform: translateX(7px) rotate(6deg); } }
 
 #intro { background: radial-gradient(ellipse at 7% 80%, #efd9de 0 22%, transparent 22.2%), radial-gradient(ellipse at 100% 10%, #fae6c8 0 28%, transparent 28.2%), #fff4eb; }
 .icard { border: 5px solid #fff; border-radius: 48px; background: radial-gradient(ellipse at 50% 35%, #fff1d6, transparent 64%), var(--paper);
@@ -142,7 +144,6 @@
 .choice { width: 290px; height: 290px; font-size: 180px; }
 .choice.letter { font-size: 200px; }
 .choice.letter.two { font-size: 150px; }
-.streak { top: 44px; font-size: 34px; }
 @keyframes shake { 25% { transform: translateX(-7px); } 75% { transform: translateX(7px); } }
 
 #puzzle { background: radial-gradient(ellipse at 0 100%, #dcd3ec, transparent 60%), radial-gradient(#afa0c525 1.4px, transparent 1.8px), #f5f0f7; background-size: auto, 26px 26px, auto; }
@@ -151,14 +152,13 @@
 .tray { background: #e8dfef; border: 3px solid #ffffffb3; border-radius: 32px; box-shadow: inset 0 4px 12px #78648818, 0 5px 0 #d2c3df; }
 .piece { border-radius: 10px; box-shadow: 0 4px 0 #77658e66, 0 9px 15px #58447133; }
 .piece.snap { border-radius: 0; box-shadow: none; }
-.lvl, .pname { color: #70558c; }
+.pname { color: #70558c; }
 
 /* race: two cars, a gas button, two lanes, word gates (Specs/features/racing.md) */
 /* The race fills the window: the grass runs out to the window's sides, the road to its top and bottom (--bx/--by,
    js/stage.js); the stage clips what is beyond the window. The cars, lines and gates keep their frame coordinates:
    the road's children are shifted back down by the extra height above the frame. */
 #race { background: #d5eab9; }
-#race .lvl { left: calc(244px + var(--el)); top: 40px; color: #4c7a3c; z-index: 6; padding: 4px 14px; border-radius: 24px; background: #fffdf5cc; }
 #race .mspk { z-index: 6; }
 #race .dots { z-index: 6; }
 .rside { position: absolute; left: calc(0px - var(--bx)); top: -400px; width: calc(380px + var(--bx)); height: calc(1200px + var(--by)); will-change: transform;
@@ -178,7 +178,6 @@
 .rline.finish { background: conic-gradient(#3c3a45 25%, #fdfaf0 0 50%, #3c3a45 0 75%, #fdfaf0 0) 0 0 / 36px 36px; }
 .rcar { position: absolute; left: 0; top: 0; width: 120px; height: 200px; will-change: transform; pointer-events: none; }
 .rcar svg { display: block; width: 120px; height: 200px; filter: drop-shadow(0 8px 6px #2b2f3c55); }
-.rcar .cup { position: absolute; left: 20px; top: -96px; font-size: 80px; line-height: 1; animation: pop .4s; }
 .rgate { position: absolute; left: 0; top: 0; width: 520px; height: 220px; will-change: transform; pointer-events: none; display: none; }
 .rgate.on { display: block; }
 .rgate::before { content: ""; position: absolute; left: 6px; right: 6px; top: 0; height: 34px; border-radius: 17px;
@@ -196,6 +195,33 @@
 .rcoin.on { display: block; }
 .rcoin .ic { display: block; filter: drop-shadow(0 6px 4px #2b2f3c44); animation: rspin 1.2s ease-in-out infinite; }
 .rcoin i { position: absolute; left: 10px; top: 104px; font-size: 80px; font-style: normal; animation: rhand .7s ease-in-out infinite; }
+/* free coins between the gates (race.js TRAIL): a little smaller, no hand */
+.rcoin.bonus { font-size: 84px; width: 84px; height: 84px; translate: 8px 8px; }
+/* first place (race.js celebrate): rays and a big cup over the road, fireworks, and the car spins round once */
+.rwin { position: absolute; left: 640px; top: 300px; z-index: 20; pointer-events: none; }
+.rwin .rays { position: absolute; left: -330px; top: -330px; width: 660px; height: 660px; border-radius: 50%;
+  background: repeating-conic-gradient(#fff3b0cc 0 12deg, transparent 12deg 30deg);
+  mask: radial-gradient(circle, #000 25%, transparent 70%); -webkit-mask: radial-gradient(circle, #000 25%, transparent 70%);
+  animation: raysin .5s ease-out both, raysturn 8s linear infinite; }
+@keyframes raysin { from { opacity: 0; scale: .3; } }
+@keyframes raysturn { to { rotate: 360deg; } }
+.rwin .wcup { position: absolute; left: -120px; top: -130px; width: 240px; font-size: 240px; line-height: 1; text-align: center;
+  filter: drop-shadow(0 0 30px #ffd34d) drop-shadow(0 10px 0 #b8862066); animation: cupin .7s cubic-bezier(.3, 1.6, .5, 1) both, float 2.4s ease-in-out .7s infinite; }
+.rwin .wcup .ic { display: block; margin: 0 auto; }
+.rwin .wcup b { position: absolute; left: 50%; top: 34%; translate: -50% -50%; font-size: 76px; font-weight: 900; color: #fff;
+  text-shadow: 0 4px 0 #b8862099, 0 0 10px #a0661f88; }
+@keyframes cupin { from { transform: scale(0) rotate(-30deg); opacity: 0; } }
+.fw { position: absolute; z-index: 21; width: 0; height: 0; pointer-events: none; }
+/* a spark: a short streak flying out from the centre; a flash in the middle at the burst */
+.fw i { position: absolute; left: -6px; top: -16px; width: 12px; height: 32px; border-radius: 6px; background: var(--c);
+  box-shadow: 0 0 12px var(--c); animation: fwfly 1.3s cubic-bezier(.15, .8, .3, 1) forwards; }
+.fw b { position: absolute; left: -60px; top: -60px; width: 120px; height: 120px; border-radius: 50%;
+  background: radial-gradient(circle, #fffbe0 0 20%, #ffd34d88 45%, transparent 70%); animation: fwflash .5s ease-out forwards; }
+@keyframes fwfly { 0% { transform: rotate(var(--a)) translateY(0) scale(.5); opacity: 1; }
+  75% { opacity: 1; } 100% { transform: rotate(var(--a)) translateY(calc(-1 * var(--r))) scale(.4, .2); opacity: 0; } }
+@keyframes fwflash { from { scale: .2; opacity: 1; } to { scale: 1.4; opacity: 0; } }
+.rcar.victory > * { transform-origin: 50% 50%; animation: carspin 1s cubic-bezier(.4, 0, .3, 1) .3s; }   /* the picture, not the car: the car moves by transform */
+@keyframes carspin { 50% { rotate: 180deg; scale: 1.25; } 100% { rotate: 360deg; scale: 1; } }
 @keyframes rspin { 50% { transform: scaleX(.55); } }
 @keyframes rhand { 50% { transform: translateY(16px); } }
 .rgas { position: absolute; right: calc(56px + var(--er)); bottom: 76px; width: 200px; height: 200px; border-radius: 50%; padding: 0; cursor: pointer; z-index: 6;
@@ -223,7 +249,6 @@
 
 /* lines: coloured balls that make words (Specs/features/Lines.md) */
 #lines { background: radial-gradient(ellipse at 0 0, #ffe9c9, transparent 55%), radial-gradient(#d7b98a26 1.4px, transparent 1.8px), #fbf5ea; background-size: auto, 26px 26px, auto; }
-#lines .lvl { left: calc(250px + var(--el)); top: 44px; color: #9a6a2c; }
 /* the word cards stand right beside the board; js/lines.js sets their left edge */
 .lcards { position: absolute; left: 120px; top: 130px; width: 210px; height: 580px; display: flex; flex-direction: column; justify-content: center; gap: 14px; }
 .lcard { height: 150px; border-radius: 26px; background: #fffdf8; box-shadow: 0 6px 0 #e3d3b8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 0 14px;

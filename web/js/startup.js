@@ -64,7 +64,7 @@ export function enterHome(profileId, { greet = false } = {}) {
   if (!useProfile(profileId)) return false;
   const day = today(), newDay = S.day !== day, firstEver = !S.day;
   if (newDay) { S.day = day; S.usedMs = 0; save(); }
-  U.home = 'home'; U.streak = 0; U.pathTr = 'main'; U.sceneId = SETS[0].id; U.parentThen = null;
+  U.home = 'home'; U.pathTr = 'main'; U.sceneId = SETS[0].id; U.parentThen = null;
   renderHello(); renderCoins(); renderMute();
   go('home');
   Cloud.onProfile();

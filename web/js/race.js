@@ -18,6 +18,7 @@ const TAP = .2, FADE = 1.2;                      // one tap: a fifth of the way 
 const GLIDE = 1040;                             // lane change: 260 px in a quarter of a second
 let GATE_TOP = 14;   // a gate far ahead waits here; lower with the artwork gate, whose beam and flags stand above the signs
 const COIN_TOP = 130;            // a gate or a coin still far ahead waits here, at the top of the screen
+const TRAIL = 3, TRAIL_GAP = 170, TRAIL_AFTER = 560;   // the free coins after a gate: how many, how far apart, how far past the gate
 const ICON_GAS = '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 16 L84 54 H63 V84 H37 V54 H16 Z" fill="#fff" stroke="#fff" stroke-width="8" stroke-linejoin="round"/></svg>';
 const car = (body, dark, glass) => `<svg viewBox="0 0 120 200" aria-hidden="true">
   <g fill="#3c3a45"><rect x="4" y="32" width="18" height="40" rx="7"/><rect x="98" y="32" width="18" height="40" rx="7"/>
@@ -41,7 +42,10 @@ const carLane = () => (R.x < (LANE_X[0] + LANE_X[1]) / 2 ? 0 : 1);
 // only while this race is still the one on the screen
 const soon = (fn, ms) => { const me = R; later(() => { if (R === me) fn(); }, ms); };
 
-function stopRace() { cancelAnimationFrame(raf); raf = 0; engine.stop(); R = null; }
+function stopRace() {
+  cancelAnimationFrame(raf); raf = 0; engine.stop(); R = null;
+  document.querySelectorAll('#race .rwin, #race .fw').forEach(e => e.remove()); $('rme').classList.remove('victory');
+}
 onLeave(stopRace);
 
 /* ================= building a race ================= */
@@ -71,13 +75,20 @@ function startRace(task) {
     const w = words[i - (lead ? 1 : 0)];
     items.push({ kind: 'gate', d, lane: s, w, wrong: wrongFor(w), state: 'far' });
   }
+  // after each gate, a trail of free coins in one lane: no word, just steer onto them (feedback 2026-11-17: more coins on
+  // the road). Right after the gate, so they are gone before the next gate comes down to wait at the top (a trail half way
+  // ran under its signs). Not counted as missed, and the gates' hint does not look at them.
+  const stops = items.map(it => it.d);
+  for (let i = 0; i + 1 < stops.length; i++) {
+    const lane = one([0, 1]);
+    for (let j = 0; j < TRAIL; j++) items.push({ kind: 'bonus', d: stops[i] + TRAIL_AFTER + j * TRAIL_GAP, lane, state: 'far' });
+  }
   const top = RACE.top * boost;
   R = { lv, think, top, rest: RACE.rest, len: RACE.len, items, phase: 'wait', t: 0, last: performance.now(),
     d: 0, v: 0, kick: 0, lane: 1, x: LANE_X[1], taps: 0, got: 0, missRun: 0, cur: null,
     rd: 0, rlane: 0, rx: LANE_X[0], rnext: 3, won: null, doneAt: 0 };
 
   $('rspk').innerHTML = I.speaker; $('rgas').innerHTML = ICON_GAS;
-  $('rlvl').innerHTML = I.star.repeat(lv);
   $('rdots').innerHTML = dotsHtml();
   $('rme').innerHTML = carPic('car-red', '#f0694c', '#b8452f', '#3f4a66'); $('rrival').innerHTML = carPic('car-blue', '#5b9be0', '#3a6fae', '#3f4a66');
   $('race').classList.toggle('art-gate', hasArt('gate-bar')); GATE_TOP = hasArt('gate-bar') ? 86 : 14; $('race').classList.toggle('art-sign', hasArt('sign'));
@@ -89,6 +100,9 @@ function startRace(task) {
       el.innerHTML = [0, 1].map(s => { const w = s === it.lane ? it.w : it.wrong;
         return `<div class="rsign${s === it.lane ? ' right' : ''}">${picOf(w, emojiOf(w))}<span class="tip">${I.coin}</span></div>`; }).join('');
       $('rgates').appendChild(el);
+    } else if (it.kind === 'bonus') {
+      el.className = 'rcoin bonus'; el.innerHTML = I.coin;
+      $('rthings').appendChild(el);
     } else {
       el.className = 'rcoin'; el.innerHTML = I.coin + '<i>👆</i>';
       $('rthings').appendChild(el);
@@ -184,6 +198,12 @@ function rival(dt) {
 // a gate or a coin: far ahead → shown and waiting at the top → passed
 function step(it) {
   const dist = it.d - R.d;
+  if (it.kind === 'bonus') {
+    if (it.state === 'far' && dist < 700) { it.state = 'on'; it.el.classList.add('on'); }
+    else if (it.state === 'on' && dist <= 0 && carLane() === it.lane) { it.state = 'past'; it.el.classList.remove('on'); collect(it.lane); }
+    else if (it.state === 'on' && dist < -CAR_H) { it.state = 'past'; it.el.classList.remove('on'); }
+    return;
+  }
   if (it.state === 'far') {
     // shown early enough to choose a lane even if the child speeds up right after
     it.lead = (it.kind === 'gate' ? R.think : 2.4) * (R.v + R.top) / 2;
@@ -226,6 +246,7 @@ function draw() {
     if (it.state === 'far') return;
     const dist = it.d - R.d;
     if (it.kind === 'gate') put(it.el, 0, Math.min(900, Math.max(GATE_TOP, CAR_Y - 70 - dist)));
+    else if (it.kind === 'bonus') put(it.el, LANE_X[it.lane] + 10, CAR_Y - 50 - dist);
     else put(it.el, LANE_X[it.lane] + 10, Math.min(900, Math.max(COIN_TOP, CAR_Y - 50 - dist)));
   });
   const k = d => 290 * Math.max(0, Math.min(1, d / R.len));
@@ -242,8 +263,28 @@ function finish() {
   S.stats.tasks++; save();
   confetti(); sfx.ok();
   say(cheer('finish'), cheer(R.won ? 'firstPlace' : praise()));
-  if (R.won) $('rme').insertAdjacentHTML('beforeend', `<div class="cup">${I.trophy}</div>`);
+  if (R.won) celebrate();
   if (more) { L.earned += more; soon(() => addCoins(more, { x: 640, y: 330 }), 500); }
-  soon(nextTask, 2800);
+  soon(nextTask, R.won ? 4200 : 2800);
+}
+// first place (feedback 2026-11-17: "a more exciting effect than a cup on the car"): light rays turn behind a big cup with
+// a "1" on it, fireworks go off over the road, and the car spins round once
+function celebrate() {
+  const win = document.createElement('div'); win.className = 'rwin';
+  win.innerHTML = `<div class="rays"></div><div class="wcup">${I.trophy}<b>1</b></div>`;
+  $('race').appendChild(win);
+  $('rme').classList.add('victory');
+  // on the grass at both sides of the road, where nothing else is, and two high over the cup
+  [[190, 230], [1090, 200], [250, 500], [1030, 470], [470, 90], [810, 110], [170, 360], [1110, 340]].forEach(([x, y], k) => soon(() => firework(x, y), 200 + k * 330));
+}
+const FW_COLORS = ['#ffd34d', '#ff8a3d', '#f0694c', '#5b9be0', '#7fd08a', '#d77fb6'];
+function firework(x, y) {
+  const fw = document.createElement('div'); fw.className = 'fw';
+  fw.style.left = x + 'px'; fw.style.top = y + 'px';
+  const c = one(FW_COLORS);
+  fw.innerHTML = '<b></b>' + Array.from({ length: 22 }, (_, i) =>
+    `<i style="--a:${i * 360 / 22}deg;--c:${i % 2 ? c : one(FW_COLORS)};--r:${120 + Math.random() * 90}px"></i>`).join('');
+  $('race').appendChild(fw); sfx.burst();
+  setTimeout(() => fw.remove(), 1500);
 }
 onTask('race', startRace);

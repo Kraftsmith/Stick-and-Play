@@ -4,7 +4,6 @@ import { SETS } from './data.js';
 export const U = {
   current: 'home',       // the open screen
   home: 'home',          // where Back leads from the top screens: 'home', or 'who' while nobody is chosen yet
-  streak: 0,             // correct answers in a row (a bonus every third)
   pathTr: 'main',        // the level shown on the lesson path
   sceneId: 'farm',       // the album page
   parentThen: null,      // what the parent code unlocks: null = the parent zone, 'extend' = 15 more minutes

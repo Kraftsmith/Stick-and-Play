@@ -344,7 +344,7 @@ $('mute').onclick = ev => {
 };
 renderMute();
 // browsers allow sound only after the first touch; the praise is said after every right answer, so it is fetched at once
-addEventListener('pointerdown', () => { music.start(); warm(...PRAISE.map(cheer), ph('tryAgain'), cheer('streak')); }, { once: true });
+addEventListener('pointerdown', () => { music.start(); warm(...PRAISE.map(cheer), ph('tryAgain')); }, { once: true });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { music.stop(); try { actx && actx.suspend(); } catch (e) {} }
   else { try { actx && actx.resume(); } catch (e) {} music.start(); }

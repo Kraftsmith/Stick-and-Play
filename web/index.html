@@ -102,7 +102,6 @@
 
   <!-- QUIZ -->
   <section class="screen" id="quiz">
-    <div class="streak" id="streak"></div>
     <div class="prompt" id="prompt"></div>
     <div class="choices" id="choices"></div>
     <div class="dots" id="dots"></div>
@@ -110,16 +109,26 @@
 
   <!-- TRACE A LETTER -->
   <section class="screen" id="trace">
-    <div class="streak" id="tstreak"></div>
     <button class="speak tspk" id="tspk"><svg class="ic" viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 19h7l10-8v26l-10-8H8z" fill="currentColor"/><path d="M32 18a8 8 0 0 1 0 12M37 13a15 15 0 0 1 0 22"/></svg></button>
     <div class="tcard" id="tcard"><div class="tpic" id="tpic"></div><canvas id="tguide" width="600" height="600"></canvas><canvas id="tink" width="600" height="600"></canvas></div>
-    <button class="tclear" id="tclear">↺</button>
+    <!-- start the letter again: a cartoon eraser (rub out the drawing), drawn, so it sits in the middle of the button -->
+    <button class="tclear" id="tclear" aria-label="Start again"><svg class="ic" viewBox="0 0 48 48" aria-hidden="true">
+  <path d="M7 42c5-2.5 10-2.5 15 0" fill="none" stroke="#e7a3b2" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="1 6"/>
+  <g transform="rotate(-32 24 22)">
+    <rect x="7" y="17" width="34" height="16" rx="5" fill="#cf5f7b"/>
+    <path d="M23 17h13a5 5 0 0 1 5 5v6a5 5 0 0 1-5 5H23z" fill="#3e86bf"/>
+    <rect x="7" y="13" width="34" height="16" rx="5" fill="#ff8fa8"/>
+    <path d="M23 13h13a5 5 0 0 1 5 5v6a5 5 0 0 1-5 5H23z" fill="#62b4ea"/>
+    <path d="M23 13v16" stroke="#fff" stroke-width="2" opacity=".7"/>
+    <rect x="11" y="16" width="8" height="3.4" rx="1.7" fill="#fff" opacity=".65"/>
+    <rect x="27" y="16" width="9" height="3.4" rx="1.7" fill="#fff" opacity=".45"/>
+  </g>
+</svg></button>
     <div class="dots" id="tdots"></div>
   </section>
 
   <!-- PUZZLE -->
   <section class="screen" id="puzzle">
-    <div class="lvl" id="lvl"></div>
     <div class="board" id="board"><div class="ghost" id="ghost"></div></div>
     <div class="tray" id="tray"></div>
     <div class="pname" id="pname"></div>
@@ -129,7 +138,6 @@
   <!-- PAIRS (memory game) -->
   <section class="screen" id="pairs">
     <button class="speak mspk" id="mspk"></button>
-    <div class="lvl" id="mlvl"></div>
     <div class="pgrid" id="mgrid"></div>
     <div class="dots" id="mdots"></div>
   </section>
@@ -137,7 +145,6 @@
   <!-- LINES (Specs/features/Lines.md) -->
   <section class="screen" id="lines">
     <button class="speak mspk" id="lspk"></button>
-    <div class="lvl" id="llvl"></div>
     <div class="lcards" id="lcards"></div>
     <div class="lgrid" id="lgrid"></div>
     <div class="dots" id="ldots"></div>
@@ -157,7 +164,6 @@
       <div id="rgates"></div>
     </div>
     <button class="speak mspk" id="rspk"></button>
-    <div class="lvl" id="rlvl"></div>
     <div class="rbar"><i></i><b class="rv" id="rbarR"></b><b id="rbarM"></b></div>
     <button class="rgas" id="rgas" aria-label="Go faster"></button>
     <div class="rcount" id="rcount"></div>

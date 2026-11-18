@@ -19,7 +19,6 @@ export function go(id) {
   stopVoice();
   if (timeUp() && ['path', 'intro', 'quiz', 'trace', 'puzzle', 'pairs', 'lines', 'race', 'collection'].includes(id)) id = 'album';
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id));
-  if (id === 'home') U.streak = 0;
   U.current = id;
   $('back').style.display = START_SCREENS.includes(id) ? 'none' : 'grid';
   $('coins').style.display = id === 'parent' || id === 'who' || id === 'firstrun' ? 'none' : 'flex';

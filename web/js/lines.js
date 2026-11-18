@@ -167,7 +167,6 @@ function startLines(task) {
         at: Array(V.cols * V.rows).fill(null), queue: words.slice(), colours: shuffle(LINE_COLORS), active: [], buf: [],
         total: words.length, done: 0, sel: null, lock: false, began: false, noWord: 0, hint: null, idle: 0, tut: !S.stats.lines ? 'demo' : null };
   $('lspk').innerHTML = I.speaker;
-  $('llvl').innerHTML = I.star.repeat(lv);
   $('ldots').innerHTML = dotsHtml();
   $('lcards').innerHTML = '';
   const g = $('lgrid');

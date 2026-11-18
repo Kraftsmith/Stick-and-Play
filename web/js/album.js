@@ -401,7 +401,7 @@ function dragPlaced(el) {
     if (pinch && ptrs.size === 2) {
       const [a, b] = [...ptrs.values()];
       const d = Math.hypot(b.x - a.x, b.y - a.y), ang = Math.atan2(b.y - a.y, b.x - a.x);
-      el._it.s = Math.max(.4, Math.min(3, pinch.s * d / pinch.d));
+      el._it.s = Math.max(S_MIN, Math.min(S_MAX, pinch.s * d / pinch.d));
       el._it.r = pinch.r + (ang - pinch.ang) * 180 / Math.PI;
       applyT(el); return;
     }
@@ -445,6 +445,9 @@ function select(el) {
   t.style.left = Math.max(L() + 10, Math.min(R() - 10 - W, x)) + 'px';
   t.style.top = Math.max(TOP, Math.min(BOTTOM - H, y)) + 'px';
 }
+// a sticker's size on the page: 1 when placed, the − / + buttons change it by a step, a pinch smoothly. One step more each
+// way than before (0.4…3, feedback 2026-11-17: a big flower pot next to the biggest tree)
+const S_MIN = .2, S_MAX = 3.2, S_STEP = .2;
 function hideTools() { $('tools').classList.remove('on'); document.querySelectorAll('.placed.sel').forEach(e => e.classList.remove('sel')); selected = null; }
 // a tap anywhere else on the page: the toolbar closes, a sticker being tried on goes back
 $('scene').addEventListener('pointerdown', () => { hideTools(); cancelTrial(); });
@@ -452,8 +455,8 @@ $('tools').querySelectorAll('button').forEach(b => b.onclick = ev => {
   ev.stopPropagation(); if (!selected) return;
   const it = selected._it, zs = sceneData().map(i => i.z); sfx.pop();
   switch (b.dataset.t) {
-    case 'up': it.s = Math.min(3, it.s + .2); break;
-    case 'down': it.s = Math.max(.4, it.s - .2); break;
+    case 'up': it.s = Math.min(S_MAX, +(it.s + S_STEP).toFixed(2)); break;
+    case 'down': it.s = Math.max(S_MIN, +(it.s - S_STEP).toFixed(2)); break;
     case 'rot': it.r = (it.r + 30) % 360; break;
     case 'flip': it.f = !it.f; break;
   }
