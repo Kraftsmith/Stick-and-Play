@@ -41,6 +41,18 @@ export function confetti() {
 // a lesson's three stars (SPEC 3.1): the earned ones lit, the rest dim; `cls` sizes them (path circle, reward card)
 export const starsHtml = (n, cls) =>
   `<span class="stars ${cls}" aria-label="${n} of 3 stars">${[0, 1, 2].map(i => `<span class="s ${i < n ? 'on' : 'off'}" style="--n:${i}">${I.star}</span>`).join('')}</span>`;
+// a firework burst at (x, y) of `parent` (stage pixels): the race's first place, a finished level
+const FW_COLORS = ['#ffd34d', '#ff8a3d', '#f0694c', '#5b9be0', '#7fd08a', '#d77fb6'];
+const pick = a => a[Math.floor(Math.random() * a.length)];
+export function firework(x, y, parent) {
+  const fw = document.createElement('div'); fw.className = 'fw';
+  fw.style.left = x + 'px'; fw.style.top = y + 'px';
+  const c = pick(FW_COLORS);
+  fw.innerHTML = '<b></b>' + Array.from({ length: 22 }, (_, i) =>
+    `<i style="--a:${i * 360 / 22}deg;--c:${i % 2 ? c : pick(FW_COLORS)};--r:${120 + Math.random() * 90}px"></i>`).join('');
+  parent.appendChild(fw); sfx.burst();
+  setTimeout(() => fw.remove(), 1500);
+}
 export function overlay(html) { $('card').innerHTML = html; $('overlay').classList.add('on'); }
 export function closeOverlay() { $('overlay').classList.remove('on'); }
 

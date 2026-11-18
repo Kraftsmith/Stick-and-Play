@@ -7,7 +7,7 @@ import { I } from './icons.js';
 import { RACE_ART } from './gen/art.js';
 import { shuffle, one } from './util.js';
 import { say, ph, en, cheer, sfx, engine } from './audio.js';
-import { confetti, addCoins } from './ui.js';
+import { confetti, addCoins, firework } from './ui.js';
 import { go, onLeave } from './nav.js';
 import { L, later, nextTask, dotsHtml, onTask } from './lessons.js';
 
@@ -275,16 +275,6 @@ function celebrate() {
   $('race').appendChild(win);
   $('rme').classList.add('victory');
   // on the grass at both sides of the road, where nothing else is, and two high over the cup
-  [[190, 230], [1090, 200], [250, 500], [1030, 470], [470, 90], [810, 110], [170, 360], [1110, 340]].forEach(([x, y], k) => soon(() => firework(x, y), 200 + k * 330));
-}
-const FW_COLORS = ['#ffd34d', '#ff8a3d', '#f0694c', '#5b9be0', '#7fd08a', '#d77fb6'];
-function firework(x, y) {
-  const fw = document.createElement('div'); fw.className = 'fw';
-  fw.style.left = x + 'px'; fw.style.top = y + 'px';
-  const c = one(FW_COLORS);
-  fw.innerHTML = '<b></b>' + Array.from({ length: 22 }, (_, i) =>
-    `<i style="--a:${i * 360 / 22}deg;--c:${i % 2 ? c : one(FW_COLORS)};--r:${120 + Math.random() * 90}px"></i>`).join('');
-  $('race').appendChild(fw); sfx.burst();
-  setTimeout(() => fw.remove(), 1500);
+  [[190, 230], [1090, 200], [250, 500], [1030, 470], [470, 90], [810, 110], [170, 360], [1110, 340]].forEach(([x, y], k) => soon(() => firework(x, y, $('race')), 200 + k * 330));
 }
 onTask('race', startRace);

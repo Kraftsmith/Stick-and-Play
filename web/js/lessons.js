@@ -1,13 +1,13 @@
 // A lesson: its intro cards and task list, running the tasks one after another, the reward at the end.
 import { $ } from './stage.js';
 import { U } from './session.js';
-import { S, save, isDone, starsOf, starsFor, wordsOf, learnedWords, learnedLetters, learnedChunks } from './state.js';
-import { TRACKS, THEMES, LETTERS, letterSound, CHUNKS, CHUNK_WORD, WORD_INFO, SETS, STICKERS, ECON, pic, picOf, markWord, sndOf } from './data.js';
+import { S, save, isDone, nextIdx, starsOf, starsFor, wordsOf, learnedWords, learnedLetters, learnedChunks } from './state.js';
+import { TRACKS, LEVELS, THEMES, LETTERS, letterSound, CHUNKS, CHUNK_WORD, WORD_INFO, SETS, STICKERS, ECON, pic, picOf, markWord, sndOf } from './data.js';
 const letterWords = lis => lis.flatMap(li => LETTERS[li][1].map(x => x[0]));
 import { I } from './icons.js';
 import { one, shuffle } from './util.js';
 import { say, en, cheer, sfx } from './audio.js';
-import { overlay, closeOverlay, addCoins, confetti, starsHtml } from './ui.js';
+import { overlay, closeOverlay, addCoins, confetti, firework, starsHtml } from './ui.js';
 import { go } from './nav.js';
 import { lessonLocked, stickerLocked } from './premium.js';
 
@@ -165,10 +165,14 @@ export function endLesson() {
   // stars by the mistakes (starsFor); the circle keeps the best result. A game circle has no wrong answers: three stars,
   // and no first-time bonus (its coins are the game's own)
   const isGame = L.ls.kind === 'game', first = !isDone(L.tr, L.idx) && !isGame, stars = starsFor(L.misses);
+  // the lesson that finishes the whole level for the first time (feedback 2026-11-17: "no effect, I did not notice
+  // that level 2 opened"): a cup with the level's number over the reward card, rays and fireworks, its own line
+  const len = TRACKS[L.tr].lessons.length, wasDone = nextIdx(L.tr) >= len;
   S.prog[L.tr][L.idx] = Math.max(stars, starsOf(S.prog[L.tr][L.idx]));
   save();
+  const lvDone = !wasDone && nextIdx(L.tr) >= len, lvNo = LEVELS.findIndex(l => l[0] === L.tr) + 1;
   confetti(); sfx.ok();
-  say(cheer(stars === 3 ? 'stars3' : 'lessonDone'));
+  say(cheer(lvDone ? 'levelDone' : stars === 3 ? 'stars3' : 'lessonDone'));
   if (first) { L.earned += ECON.lessonFirst; addCoins(ECON.lessonFirst, { x: 620, y: 360 }); }   // first-time lesson bonus
   const me = L;
   setTimeout(() => {
@@ -179,7 +183,8 @@ export function endLesson() {
     // Stick shows up after that, when the total is enough for a sticker: no text, the voice says it.
     const to = S.coins, from = Math.max(0, to - L.earned);
     // the stars of this time (not the best one): they light up one by one, the dim ones are what a cleaner run gives
-    overlay(`${starsHtml(stars, 'endstars')}
+    overlay(`${lvDone ? `<div class="lvwin"><div class="rays"></div><div class="lvcup">${I.trophy}<b>${lvNo}</b></div>
+      <div class="lvname">${LEVELS[lvNo - 1][1]}</div></div>` : ''}${starsHtml(stars, 'endstars')}
       <div class="total" id="total" title="Coins"><span class="c">${I.coin}</span><span id="totalN">${from}</span>
         ${to > from ? `<span class="plus">+${to - from}</span>` : ''}</div>
       <div class="row endrow">
@@ -189,6 +194,9 @@ export function endLesson() {
     // only two choices: a sticker in the album, or the next lesson (the path, after the last one)
     $('nextl').onclick = () => { closeOverlay(); if (hasNext) startLesson(L.tr, L.idx + 1); else go('path'); };
     const ts = $('tostick'); if (ts) ts.onclick = () => { U.sceneId = rewardAlbum(L.ls.theme); go('album'); };
+    // fireworks on both sides of the card, where the backdrop is empty
+    if (lvDone) [[180, 220], [1100, 200], [230, 560], [1050, 540], [140, 390], [1140, 380], [300, 90], [980, 80]].forEach(([x, y], k) =>
+      setTimeout(() => { if (L === me && $('overlay').classList.contains('on')) firework(x, y, $('overlay')); }, 300 + k * 330));
     for (let n = 0; n < stars; n++) setTimeout(() => { if (L === me) sfx.pop(); }, STAR_POP0 + n * STAR_STEP);
     countUp($('totalN'), from, to, () => {
       if (L !== me || !ts || !ts.isConnected) return;

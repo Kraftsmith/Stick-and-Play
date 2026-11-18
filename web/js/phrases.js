@@ -28,7 +28,8 @@ export const PHRASES = {
   tryAgain:       { ru: 'Попробуй ещё!', de: 'Versuch es noch mal!', fr: 'Essaie encore !' },
   stars3:         { ru: 'Три звезды! Отлично!', de: 'Drei Sterne! Super!', fr: 'Trois étoiles ! Bravo !' },
   lessonDone:     { ru: 'Урок пройден!', de: 'Lektion geschafft!', fr: 'Leçon terminée !' },
-  canBuy:         { ru: 'Можно выбрать новый стикер!', de: 'Du kannst einen neuen Sticker aussuchen!', fr: 'Tu peux choisir un nouveau sticker !' },
+  levelDone:      { ru: 'Уровень пройден! Ура!', de: 'Level geschafft! Hurra!', fr: 'Niveau terminé ! Hourra !' },
+  canBuy:        { ru: 'Можно выбрать новый стикер!', de: 'Du kannst einen neuen Sticker aussuchen!', fr: 'Tu peux choisir un nouveau sticker !' },
   // praise: PRAISE, one at random (state.js praise())
   bravo:          { ru: 'Браво!', de: 'Bravo!', fr: 'Bravo !' },
   right:          { ru: 'Правильно!', de: 'Richtig!', fr: 'C’est ça !' },

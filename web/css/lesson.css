@@ -211,15 +211,6 @@
 .rwin .wcup b { position: absolute; left: 50%; top: 34%; translate: -50% -50%; font-size: 76px; font-weight: 900; color: #fff;
   text-shadow: 0 4px 0 #b8862099, 0 0 10px #a0661f88; }
 @keyframes cupin { from { transform: scale(0) rotate(-30deg); opacity: 0; } }
-.fw { position: absolute; z-index: 21; width: 0; height: 0; pointer-events: none; }
-/* a spark: a short streak flying out from the centre; a flash in the middle at the burst */
-.fw i { position: absolute; left: -6px; top: -16px; width: 12px; height: 32px; border-radius: 6px; background: var(--c);
-  box-shadow: 0 0 12px var(--c); animation: fwfly 1.3s cubic-bezier(.15, .8, .3, 1) forwards; }
-.fw b { position: absolute; left: -60px; top: -60px; width: 120px; height: 120px; border-radius: 50%;
-  background: radial-gradient(circle, #fffbe0 0 20%, #ffd34d88 45%, transparent 70%); animation: fwflash .5s ease-out forwards; }
-@keyframes fwfly { 0% { transform: rotate(var(--a)) translateY(0) scale(.5); opacity: 1; }
-  75% { opacity: 1; } 100% { transform: rotate(var(--a)) translateY(calc(-1 * var(--r))) scale(.4, .2); opacity: 0; } }
-@keyframes fwflash { from { scale: .2; opacity: 1; } to { scale: 1.4; opacity: 0; } }
 .rcar.victory > * { transform-origin: 50% 50%; animation: carspin 1s cubic-bezier(.4, 0, .3, 1) .3s; }   /* the picture, not the car: the car moves by transform */
 @keyframes carspin { 50% { rotate: 180deg; scale: 1.25; } 100% { rotate: 360deg; scale: 1; } }
 @keyframes rspin { 50% { transform: scaleX(.55); } }
