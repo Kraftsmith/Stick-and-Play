@@ -110,13 +110,13 @@ function drop(b, k, grow) {
   b.k = k; G.at[k] = b; place(b); b.el.classList.remove('wait');
   if (grow) { b.el.classList.add('grow'); sfx.plop(); }
 }
-// the balls of the first words: scattered so that no two of one colour stand side by side and no word is made
+// the balls of the first words (or of the words that come whole later): scattered over the free cells so that no two
+// of one colour stand side by side and no word is made
 function scatter(balls) {
-  const n = G.cols * G.rows;
   for (let t = 0; t < 300; t++) {
-    const cells = shuffle([...Array(n).keys()]).slice(0, balls.length);
-    const w = {}; cells.forEach((k, i) => { w[k] = balls[i].w; });
-    const touching = cells.some(k => { const [r, c] = rc(k); return [kOf(r, c + 1), kOf(r + 1, c)].some(m => m >= 0 && w[m] === w[k]); });
+    const cells = shuffle(freeCells()).slice(0, balls.length);
+    const w = {}; G.at.forEach((b, k) => { if (b) w[k] = b.w; }); cells.forEach((k, i) => { w[k] = balls[i].w; });
+    const touching = cells.some(k => { const [r, c] = rc(k); return [kOf(r, c + 1), kOf(r + 1, c), kOf(r, c - 1), kOf(r - 1, c)].some(m => m >= 0 && w[m] === w[k]); });
     if (touching && t < 250) continue;
     balls.forEach((b, i) => drop(b, cells[i], false));
     if (!made().length) return;
@@ -287,8 +287,10 @@ async function afterMove(me) {
     G.noWord = 0;
     for (const A of got) { await collect(A, me); if (!alive(me)) return; }
     if (G.done >= G.total) return linesDone();
-    // the board ran empty before the next word came: it comes now, whole
-    if (!G.at.some(Boolean)) {
+    // no word is left whole on the board (it ran empty, or only the first balls of the next word have fallen): the
+    // rest of that word comes now, and the next words whole. Otherwise a single ball stood there, and nothing more
+    // fell until the child moved it (feedback 2026-11-17)
+    if (!G.active.some(A => A.balls.every(b => b.k >= 0))) {
       const fresh = G.buf.splice(0);   // the balls of a word that had started to fall
       while (G.active.length < G.start && G.queue.length) fresh.push(...ballsOf(enterWord(true)));
       scatter(fresh); fresh.forEach(b => b.el.classList.add('grow')); sfx.plop();
