@@ -1,0 +1,27 @@
+/* Privacy, account deletion and other plain-text pages of the site. No web fonts: nothing is loaded from third parties. */
+:root { --ink: #493c50; --muted: #756579; --paper: #fffdf5; --mint: #e6f6f0; --warm: #fff1d2; --edge: #d99a48; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink);
+  font: 500 17px/1.6 "Nunito", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif; -webkit-text-size-adjust: 100%; }
+.wrap { width: min(760px, 100% - 32px); margin-inline: auto; }
+header { padding: 22px 0; }
+.logo { font-size: 26px; font-weight: 900; text-decoration: none; color: var(--ink); letter-spacing: -.01em; }
+.logo i { font-style: normal; color: var(--edge); margin: 0 3px; }
+main { padding-bottom: 48px; }
+h1 { font-size: clamp(32px, 6vw, 46px); line-height: 1.1; font-weight: 900; margin: 12px 0 6px; letter-spacing: -.015em; }
+h2 { font-size: 24px; line-height: 1.25; font-weight: 900; margin: 34px 0 8px; }
+h3 { font-size: 19px; font-weight: 800; margin: 20px 0 4px; }
+p, ul, ol { margin: 0 0 12px; }
+ul, ol { padding-left: 24px; }
+li { margin: 4px 0; }
+a { color: #2f6fb1; }
+.date { color: var(--muted); margin-bottom: 22px; }
+.box { background: var(--mint); border-radius: 22px; padding: 18px 22px; margin: 18px 0 8px; }
+.box.warm { background: var(--warm); }
+.box p:last-child, .box ul:last-child, .box ol:last-child { margin-bottom: 0; }
+table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; font-size: 16px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 8px; border-bottom: 1px solid #e8dfd0; }
+th { font-weight: 800; }
+footer { border-top: 1px solid #eee3d0; padding: 22px 0 36px; color: var(--muted); font-size: 15px; }
+footer nav { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 6px; }
+footer a { color: var(--ink); }
