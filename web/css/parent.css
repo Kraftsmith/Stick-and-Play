@@ -126,3 +126,6 @@
 /* the language of each child in its row (startup.md 3.5) */
 .pkid .pklang .lpick { font-size: 22px; }
 .pkid .pklang .lpick .lpcur { min-width: 8.5em; min-height: 72px; border-width: 2px; border-color: #c9c7bd; border-radius: 16px; }
+/* links to the privacy policy and account deletion on the site, at the end of Settings */
+.plegal { gap: 28px; }
+.plegal a { font-size: 22px; color: #6b7f9a; text-decoration: underline; }

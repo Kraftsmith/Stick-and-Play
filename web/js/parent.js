@@ -60,7 +60,7 @@ const T = {
     music: 'Music volume:', voice: 'Voice volume:', off: 'off', hints: 'Spoken hints in lessons:', on: 'on',
     hintsNote: 'off: no spoken instructions, only English words and praise',
     voiceOf: 'Voice:', test: 'Test', installVoices: 'Install voices', browserSpeech: 'browser speech',
-    limit: 'Daily limit:', noLimit: 'no limit', langNames: { ru: 'Russian', en: 'English', uk: 'Ukrainian', de: 'German', fr: 'French', es: 'Spanish' },
+    limit: 'Daily limit:', noLimit: 'no limit', privacy: 'Privacy Policy', delAcc: 'Delete account', langNames: { ru: 'Russian', en: 'English', uk: 'Ukrainian', de: 'German', fr: 'French', es: 'Spanish' },
     title: 'For Parents', sleepy: 'The stickers are sleepy.<br>Come back tomorrow!', keepOn: 'Keep learning +15 min',
   },
   // German (TASKS 4б.4): the grown-up is "Sie", as on the account and payment screens
@@ -98,7 +98,7 @@ const T = {
     music: 'Musik:', voice: 'Stimme:', off: 'aus', hints: 'Gesprochene Hinweise:', on: 'an',
     hintsNote: 'aus: keine gesprochenen Anleitungen, nur englische Wörter und Lob',
     voiceOf: 'Stimme des Geräts:', test: 'Testen', installVoices: 'Stimmen installieren', browserSpeech: 'Sprachausgabe des Browsers',
-    limit: 'Tageslimit:', noLimit: 'kein Limit', langNames: { ru: 'Russisch', en: 'Englisch', uk: 'Ukrainisch', de: 'Deutsch', fr: 'Französisch', es: 'Spanisch' },
+    limit: 'Tageslimit:', noLimit: 'kein Limit', privacy: 'Datenschutzerklärung', delAcc: 'Konto löschen', langNames: { ru: 'Russisch', en: 'Englisch', uk: 'Ukrainisch', de: 'Deutsch', fr: 'Französisch', es: 'Spanisch' },
     title: 'Für Eltern', sleepy: 'Die Sticker sind müde.<br>Bis morgen!', keepOn: 'Weiterlernen +15 Min.',
   },
   // French (TASKS 4в.4): the grown-up is "vous", as on the account and payment screens
@@ -136,7 +136,7 @@ const T = {
     music: 'Musique :', voice: 'Voix :', off: 'non', hints: 'Consignes parlées :', on: 'oui',
     hintsNote: 'non : pas de consignes parlées, seulement les mots anglais et les félicitations',
     voiceOf: 'Voix de l’appareil :', test: 'Tester', installVoices: 'Installer des voix', browserSpeech: 'synthèse vocale du navigateur',
-    limit: 'Limite par jour :', noLimit: 'sans limite', langNames: { ru: 'russe', en: 'anglais', uk: 'ukrainien', de: 'allemand', fr: 'français', es: 'espagnol' },
+    limit: 'Limite par jour :', noLimit: 'sans limite', privacy: 'Politique de confidentialité', delAcc: 'Supprimer le compte', langNames: { ru: 'russe', en: 'anglais', uk: 'ukrainien', de: 'allemand', fr: 'français', es: 'espagnol' },
     title: 'Pour les parents', sleepy: 'Les stickers ont sommeil.<br>À demain !', keepOn: 'Continuer +15 min',
   },
 };
@@ -146,6 +146,8 @@ export function labelSleep() {
   document.querySelector('.sleepmsg .t').innerHTML = t.sleepy;
   const b = $('keepon'); b.lastChild.textContent = ' ' + t.keepOn;
 }
+// the site's pages for the grown-up (Google Play wants the privacy policy reachable from inside the app)
+const LEGAL = 'https://stickandplay.kids/';
 const tx = () => { const t = T[S.lang]; return t ? { ...T.en, ...t } : T.en; };
 
 /* ================= parent ================= */
@@ -372,7 +374,8 @@ function showStats() {
   ${S.parentWho === 'custom' ? `<div class="ptime">${box('pacc', 'call', S.parentAcc)}
       ${box('pdat', 'show', S.parentDat)}<button id="plisten">${t.listen}</button></div>` : ''}
   <div class="ptime">${t.voiceOf} <span id="vstat">…</span> <button id="vtest">${t.test}</button>${NTTS ? ` <button id="vinst">${t.installVoices}</button>` : ''}</div>
-  <div class="ptime">${t.limit} ${[15,20,30,0].map(m => `<button data-m="${m}" class="${S.limit === m ? 'on' : ''}">${m ? t.min(m) : t.noLimit}</button>`).join('')}</div>`;
+  <div class="ptime">${t.limit} ${[15,20,30,0].map(m => `<button data-m="${m}" class="${S.limit === m ? 'on' : ''}">${m ? t.min(m) : t.noLimit}</button>`).join('')}</div>
+  <div class="ptime plegal"><a href="${LEGAL}privacy/" target="_blank" rel="noopener">${t.privacy}</a><a href="${LEGAL}delete-account/" target="_blank" rel="noopener">${t.delAcc}</a></div>`;
   p.innerHTML = tabs + (parentTab === 'progress' ? PROGRESS : parentTab === 'testing' ? TESTING : parentTab === 'premium' ? '<div id="ppremium"></div>' : SETTINGS);
   p.querySelectorAll('[data-pt]').forEach(b => b.onclick = () => { parentTab = b.dataset.pt; showStats(); });
   p.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { S.limit = +b.dataset.m; save(); showStats(); });

@@ -1,5 +1,17 @@
 apply plugin: 'com.android.application'
 
+// the version is the web app's (web/js/version.js, shown in the corner of the screen): 0.6.3 -> versionName "0.6.3",
+// versionCode 603. Bump it there before every upload to Google Play: the store refuses a code it has seen.
+def webVersion = (file('../../../web/js/version.js').text =~ /VERSION = '(\d+)\.(\d+)\.(\d+)'/)[0]
+def appVersionName = "${webVersion[1]}.${webVersion[2]}.${webVersion[3]}"
+def appVersionCode = webVersion[1].toInteger() * 10000 + webVersion[2].toInteger() * 100 + webVersion[3].toInteger()
+
+// the upload key for Google Play lives outside the repo (KEYSTORE_PROPERTIES, or the default below); without it the
+// release build stays unsigned and only the debug build works
+def keystoreFile = file(System.getenv('KEYSTORE_PROPERTIES') ?: 'C:/Users/User/.keys/stick-and-play/keystore.properties')
+def keystore = new Properties()
+if (keystoreFile.exists()) keystoreFile.withInputStream { keystore.load(it) }
+
 android {
     namespace = "app.stickandplay.kids"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +19,8 @@ android {
         applicationId "app.stickandplay.kids"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode appVersionCode
+        versionName appVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +28,19 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (keystore.storeFile) {
+            release {
+                storeFile file(keystore.storeFile)
+                storePassword keystore.storePassword
+                keyAlias keystore.keyAlias
+                keyPassword keystore.keyPassword
+            }
+        }
+    }
     buildTypes {
         release {
+            if (keystore.storeFile) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
