@@ -8,7 +8,7 @@ import { VOICE } from './js/gen/voice.js';
 import { SFX } from './js/gen/sfx.js';
 import { sfxFile } from './js/data.js';
 
-const CACHE = 'stick-and-speak-42';   // the name keeps the app's first name on purpose; 41: privacy links in Settings; 19: a sticker is bought by dragging
+const CACHE = 'stick-and-speak-43';   // the name keeps the app's first name on purpose; 43: the clip "Позови маму или папу!" recorded anew; 41: privacy links in Settings; 19: a sticker is bought by dragging
 const SHELL = [
   './', 'index.html', 'manifest.json', 'icon.png',
   'css/base.css', 'css/home.css', 'css/learn.css', 'css/lesson.css', 'css/album.css', 'css/collection.css', 'css/parent.css', 'css/startup.css',
